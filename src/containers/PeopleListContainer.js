@@ -1,6 +1,6 @@
 import React, { PropTypes, Component } from 'react'
 import PeopleList from '../components/PeopleList'
-import api from '../middleware/api'
+import Api, {fetchPeople} from '../middleware/api'
 import Url from 'url'
 import _ from 'lodash'
 
@@ -28,37 +28,15 @@ export default class PeopleListContainer extends Component {
     this.refreshData = this.refreshData.bind(this);
     this.refreshDataDelayed = _.debounce(this.refreshData, 200);
   }
-  getCurrentPageNumber(nextPageUrl, prevPageUrl) {
-    const getPageNumberFromUrl = url =>
-      Url.parse(url, true).query.page;
-    if (nextPageUrl) {
-      return getPageNumberFromUrl(nextPageUrl) - 1;
-    } else if (prevPageUrl) {
-      return getPageNumberFromUrl(nextPageUrl) + 1;
-    } else {
-      return 1;
-    }
-  }
-  fetchPeopleData(url) {
-    return api(url)
-      .then(json => ({
-         people: json.results,
-         url: url,
-         nextPageUrl: json.next,
-         prevPageUrl: json.previous,
-         pageNumber: this.getCurrentPageNumber(json.next, json.previous)
-      }));
-  }
   refreshData(url, state = {}) {
-    this.fetchPeopleData(url)
+    fetchPeople(url)
       .then(data => {
         let urlParsed = Url.parse(url, true);
         let searchQuery = urlParsed.query.search || '';
         let filter = this.state.filter || '';
         if (searchQuery === filter) {
           this.setState(Object.assign({}, data, state));
-        }
-      });
+        }});
   }
   onNextClick() {
     let nextPageUrl = this.state.nextPageUrl;
