@@ -3,7 +3,7 @@ import React from 'react'
 
 const PeopleList = ({
     people,
-    pageNumber,
+    page,
     onNextClick,
     onPrevClick,
     onPersonClick}) => (
@@ -17,9 +17,10 @@ const PeopleList = ({
         </tr>
       </thead>
       <tbody>
-        {people.map(person =>
-          <PersonItem key={person.name} person={person}
-            onClick={() => { onPersonClick(person.url) }} />
+        {people.map(person => {
+          return (<PersonItem key={person.id} person={person}
+            onClick={() => { onPersonClick(person.id) }} />)
+          }
         )}
       </tbody>
     </table>
@@ -32,7 +33,7 @@ const PeopleList = ({
       <a href='#' onClick={onNextClick}>next page</a> :
       <span>next page</span>
     }
-    <span> | page #{pageNumber}</span>
+    <span> | page #{page}</span>
   </div>
 );
 

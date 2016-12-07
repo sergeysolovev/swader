@@ -4,22 +4,20 @@ import Api, {fetchPeople} from '../middleware/api'
 import Url from 'url'
 import _ from 'lodash'
 
+const FILTER_SHOW_ALL = ''
+
 export default class PeopleListContainer extends Component {
   static propTypes = {
-    peopleUrl: PropTypes.string
-  }
-  static defaultProps = {
-    peopleUrl: 'people/'
+    page: PropTypes.number
   }
   constructor(props) {
     super(props);
     this.state = {
-      url: this.props.peopleUrl,
-      filter: '',
+      filter: FILTER_SHOW_ALL,
       people: [],
-      nextPageUrl: '',
-      prevPageUrl: '',
-      pageNumber: 1,
+      nextPage: undefined,
+      prevPage: undefined,
+      page: this.props.page,
       isPageChanging: false,
     };
     this.onNextClick = this.onNextClick.bind(this);
@@ -28,56 +26,50 @@ export default class PeopleListContainer extends Component {
     this.refreshData = this.refreshData.bind(this);
     this.refreshDataDelayed = _.debounce(this.refreshData, 200);
   }
-  refreshData(url, state = {}) {
-    fetchPeople(url)
+  refreshData(filter = this.state.filter, page = this.state.page, state = {}) {
+    fetchPeople(filter, page)
       .then(data => {
-        let urlParsed = Url.parse(url, true);
-        let searchQuery = urlParsed.query.search || '';
-        let filter = this.state.filter || '';
-        if (searchQuery === filter) {
+        if (filter === this.state.filter) {
           this.setState(Object.assign({}, data, state));
         }});
   }
   onNextClick() {
-    let nextPageUrl = this.state.nextPageUrl;
-    if (nextPageUrl) {
+    let nextPage = this.state.nextPage;
+    if (nextPage) {
       let onChangePageClick = this.props.onChangePageClick;
       if (onChangePageClick) {
-        onChangePageClick(nextPageUrl);
+        onChangePageClick(nextPage);
       }
       this.setState({isPageChanging: true});
-      this.refreshData(nextPageUrl, {isPageChanging: false});
+      this.refreshData(FILTER_SHOW_ALL, nextPage, {isPageChanging: false});
     }
   }
   onPrevClick() {
-    let prevPageUrl = this.state.prevPageUrl;
-    if (prevPageUrl) {
+    let prevPage = this.state.prevPage;
+    if (prevPage) {
       let onChangePageClick = this.props.onChangePageClick;
       if (onChangePageClick) {
-        onChangePageClick(prevPageUrl);
+        onChangePageClick(prevPage);
       }
       this.setState({isPageChanging: true});
-      this.refreshData(prevPageUrl, {isPageChanging: false});
+      this.refreshData(FILTER_SHOW_ALL, prevPage, {isPageChanging: false});
     }
   }
   onFilterChange(event) {
-    let filter = event.target.value;
-    let searchUrl = filter ?
-      this.props.peopleUrl + `?search=${encodeURI(filter)}` :
-      this.props.peopleUrl;
+    const filter = event.target.value;
+    this.refreshDataDelayed(filter);
     this.setState({filter});
-    this.refreshDataDelayed(searchUrl);
   }
   componentWillMount() {
-    this.refreshData(this.state.url);
+    this.refreshData();
   }
   render() {
-    let prevPageUrl = this.state.prevPageUrl;
-    let nextPageUrl = this.state.nextPageUrl;
+    let prevPage = this.state.prevPage;
+    let nextPage = this.state.nextPage;
     let isPageChanging = this.state.isPageChanging;
-    let onPrevClick = (!isPageChanging && prevPageUrl) ?
+    let onPrevClick = (!isPageChanging && prevPage) ?
       this.onPrevClick : null;
-    let onNextClick = (!isPageChanging && nextPageUrl) ?
+    let onNextClick = (!isPageChanging && nextPage) ?
       this.onNextClick : null;
     let onPersonClick = this.props.onPersonClick;
     let people = this.state.people;
@@ -86,7 +78,7 @@ export default class PeopleListContainer extends Component {
         <input type='text' onChange={this.onFilterChange}
           value={this.state.filter} />
         <PeopleList people={this.state.people}
-          pageNumber={this.state.pageNumber}
+          page={this.state.page}
           onPrevClick={onPrevClick}
           onNextClick={onNextClick}
           onPersonClick={onPersonClick} />

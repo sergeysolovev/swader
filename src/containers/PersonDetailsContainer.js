@@ -1,6 +1,6 @@
 import React, { Component, PropTypes } from 'react'
 import PersonDetails from '../components/PersonDetails'
-import api from '../middleware/api'
+import Api, {fetchPerson} from '../middleware/api'
 
 export default class PersonDetailsContainer extends React.Component {
   static propTypes = {
@@ -8,13 +8,11 @@ export default class PersonDetailsContainer extends React.Component {
   }
   constructor() {
     super();
-    this.state = {
-      person: null
-    }
+    this.state = { person: null }
   }
   componentWillMount() {
-    api(this.props.personUrl)
-      .then(data => this.setState({person: data}));
+    fetchPerson(this.props.personId)
+      .then(data => this.setState(data));
   }
   render() {
     let person = this.state.person;
