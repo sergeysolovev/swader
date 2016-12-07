@@ -28,15 +28,16 @@ export default class PeopleListContainer extends Component {
     this.refreshData = this.refreshData.bind(this);
     this.refreshDataDelayed = _.debounce(this.refreshData, 200);
   }
-  getPageNumber(nextPageUrl, prevPageUrl) {
-    // TODO: get rid of 'split', use Url.parse
-    let pageNumber = 1;
+  getCurrentPageNumber(nextPageUrl, prevPageUrl) {
+    const getPageNumberFromUrl = url =>
+      Url.parse(url, true).query.page;
     if (nextPageUrl) {
-      pageNumber = parseInt(nextPageUrl.split('=')[1]) - 1;
+      return getPageNumberFromUrl(nextPageUrl) - 1;
     } else if (prevPageUrl) {
-      pageNumber = parseInt(prevPageUrl.split('=')[1]) + 1;
+      return getPageNumberFromUrl(nextPageUrl) + 1;
+    } else {
+      return 1;
     }
-    return pageNumber;
   }
   fetchPeopleData(url) {
     return api(url)
@@ -45,7 +46,7 @@ export default class PeopleListContainer extends Component {
          url: url,
          nextPageUrl: json.next,
          prevPageUrl: json.previous,
-         pageNumber: this.getPageNumber(json.next, json.previous)
+         pageNumber: this.getCurrentPageNumber(json.next, json.previous)
       }));
   }
   refreshData(url, state = {}) {
