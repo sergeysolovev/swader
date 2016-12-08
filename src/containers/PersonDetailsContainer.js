@@ -1,6 +1,7 @@
 import React, { Component, PropTypes } from 'react'
-import PersonDetails from '../components/PersonDetails'
+import { Link } from 'react-router'
 import Api, {fetchPerson} from '../middleware/api'
+import * as Routes from '../routes'
 
 export default class PersonDetailsContainer extends React.Component {
   static propTypes = {
@@ -23,10 +24,28 @@ export default class PersonDetailsContainer extends React.Component {
       ));
   }
   render() {
-    const {person, isLoading, isError} = this.state;
-    return <PersonDetails {...this.props}
-      person={person}
-      isLoading={isLoading}
-      isError={isError} />;
+    const {location} = this.props;
+    console.log('loc', location)
+    const {isLoading, isError} = this.state;
+    const person = this.state.person || {name: '', gender: '', heigth: ''};
+    return (
+      <div>
+        <h1>Name: {person.name}</h1>
+        <h2>Gender: {person.gender}</h2>
+        <h2>Height: {person.height}</h2>
+        <Link to={{
+          pathname: Routes.PEOPLE,
+          state: location.state
+        }}>Get back to the list</Link>
+        <br />
+        {isLoading ? <span>loading...</span> : ''}
+        {isError ? <span>error!</span> : ''}
+      </div>
+    );
+
+    // return <PersonDetails {...this.props}
+    //   person={person}
+    //   isLoading={isLoading}
+    //   isError={isError} />;
   }
 }
