@@ -7,7 +7,7 @@ import _ from 'lodash'
 
 const FILTER_SHOW_ALL = ''
 
-export default class PeopleListContainer extends Component {
+export default class PeopleList extends Component {
   static propTypes = {
     page: PropTypes.number
   }

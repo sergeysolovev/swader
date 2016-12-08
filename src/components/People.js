@@ -1,13 +1,13 @@
 import React from 'react'
 import { Match } from 'react-router'
-import PeopleListContainer from '../containers/PeopleListContainer'
-import PersonDetailsContainer from '../containers/PersonDetailsContainer'
+import PeopleList from '../containers/PeopleList'
+import Person from '../containers/Person'
 
-const PeopleContainer = ({pathname}) => (
+const People = ({pathname}) => (
   <div>
-    <Match pattern={pathname} exactly component={PeopleListContainer} />
-    <Match pattern={`${pathname}/:personId`} component={PersonDetailsContainer} />
+    <Match pattern={pathname} exactly component={PeopleList} />
+    <Match pattern={`${pathname}/:personId`} component={Person} />
   </div>
 )
 
-export default PeopleContainer
+export default People

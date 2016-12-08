@@ -3,7 +3,7 @@ import { Link } from 'react-router'
 import Api, {fetchPerson} from '../middleware/api'
 import * as Routes from '../routes'
 
-export default class PersonDetailsContainer extends React.Component {
+export default class Person extends React.Component {
   static propTypes = {
     onGetBackToListClick: PropTypes.func
   }
