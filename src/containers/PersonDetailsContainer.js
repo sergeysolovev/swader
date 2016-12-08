@@ -9,8 +9,9 @@ export default class PersonDetailsContainer extends React.Component {
   constructor() {
     super();
     this.state = {
-      person: null,
-      isLoading: false
+      person: undefined,
+      isLoading: false,
+      isError: false
     }
   }
   componentWillMount() {
@@ -21,9 +22,11 @@ export default class PersonDetailsContainer extends React.Component {
       ));
   }
   render() {
-    const {person, isLoading} = this.state;
+    console.log(this.state);
+    const {person, isLoading, isError} = this.state;
     return <PersonDetails person={person}
       isLoading={isLoading}
+      isError={isError}
       onGetBackToListClick={this.props.onGetBackToListClick} />;
   }
 }

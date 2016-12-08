@@ -14,12 +14,15 @@ export const fetchPeople = (filter, page) => {
        prevPageUrl: json.previous,
        nextPage: getPageNumberFromUrl(json.next),
        prevPage: getPageNumberFromUrl(json.previous),
-       page: getCurrentPageNumber(json.next, json.previous) }));
+       page: getCurrentPageNumber(json.next, json.previous) }))
+    .catch(error => ({isError: true}));
 }
 
 export const fetchPerson = (personId) => {
   let url = `people/${personId}/`;
-  return api(url).then(json => ({person: json}));
+  return api(url)
+    .then(json => ({person: json}))
+    .catch(error => ({isError: true}));
 }
 
 const api = endpoint => {

@@ -7,7 +7,8 @@ const PeopleList = ({
     onNextClick,
     onPrevClick,
     onPersonClick,
-    isLoading}) => (
+    isLoading,
+    isError}) => (
   <div>
     <table>
       <thead>
@@ -37,6 +38,7 @@ const PeopleList = ({
     <span> | page #{page}</span>
     <br />
     {isLoading ? <span>Is loading...</span> : ' '}
+    {isError ? <span>error!</span> : ' '}
   </div>
 );
 

@@ -8,10 +8,11 @@ export default class PersonDetails extends React.Component {
       height: PropTypes.string.isRequired
     }),
     onGetBackToListClick: PropTypes.func,
-    isLoading: PropTypes.bool
+    isLoading: PropTypes.bool,
+    isError: PropTypes.bool
   }
   render() {
-    const {onGetBackToListClick, isLoading} = this.props;
+    const {onGetBackToListClick, isLoading, isError} = this.props;
     const person = this.props.person || {name: '', gender: '', heigth: ''};
     return (
       <div>
@@ -21,6 +22,7 @@ export default class PersonDetails extends React.Component {
         <a href='#' onClick={onGetBackToListClick}>Get back to the list</a>
         <br />
         {isLoading ? <span>loading...</span> : ''}
+        {isError ? <span>error!</span> : ''}
       </div>
     );
   }
