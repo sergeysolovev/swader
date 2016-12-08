@@ -1,9 +1,14 @@
 import React from 'react'
+import { Link } from 'react-router'
+import { getPersonPath } from '../routes'
 
-const PersonItem = ({person, onClick}) => (
+const PersonItem = ({person, location}) => (
   <tr>
     <td>
-      <a href='#' onClick={onClick}>{person.name}</a>
+      <Link to={{
+        pathname: getPersonPath(person.id),
+        state: location.state
+      }}>{person.name}</Link>
     </td>
     <td>{person.gender}</td>
     <td>{person.height}</td>

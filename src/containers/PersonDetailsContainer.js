@@ -15,18 +15,18 @@ export default class PersonDetailsContainer extends React.Component {
     }
   }
   componentWillMount() {
+    const {params} = this.props;
     this.setState({isLoading: true});
-    fetchPerson(this.props.personId)
+    fetchPerson(params.personId)
       .then(data => this.setState(
         Object.assign({}, data, {isLoading: false})
       ));
   }
   render() {
-    console.log(this.state);
     const {person, isLoading, isError} = this.state;
-    return <PersonDetails person={person}
+    return <PersonDetails {...this.props}
+      person={person}
       isLoading={isLoading}
-      isError={isError}
-      onGetBackToListClick={this.props.onGetBackToListClick} />;
+      isError={isError} />;
   }
 }

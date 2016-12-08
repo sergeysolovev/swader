@@ -12,12 +12,13 @@ export default class PeopleListContainer extends Component {
   }
   constructor(props) {
     super(props);
+    const {location} = this.props;
     this.state = {
       filter: FILTER_SHOW_ALL,
       people: [],
       nextPage: undefined,
       prevPage: undefined,
-      page: this.props.page,
+      page: location && location.state && location.state.page,
       isPageChanging: false,
       isLoading: false,
       isError: false
@@ -74,9 +75,11 @@ export default class PeopleListContainer extends Component {
       this.onPrevClick : null;
     let onNextClick = (!isPageChanging && nextPage) ?
       this.onNextClick : null;
-    let onPersonClick = this.props.onPersonClick;
     let people = this.state.people;
     const {isLoading, isError} = this.state;
+    const location = this.props.location || {};
+    location.state = Object.assign({}, location.state,
+      {page: this.state.page});
     return (
       <div>
         <input type='text' onChange={this.onFilterChange}
@@ -85,9 +88,9 @@ export default class PeopleListContainer extends Component {
           page={this.state.page}
           onPrevClick={onPrevClick}
           onNextClick={onNextClick}
-          onPersonClick={onPersonClick}
           isLoading={isLoading}
-          isError={isError} />
+          isError={isError}
+          location={location} />
       </div>
     );
   }

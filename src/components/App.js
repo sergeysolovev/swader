@@ -1,8 +1,9 @@
 import React from 'react'
 import { BrowserRouter, Match, Miss, Link, Redirect } from 'react-router'
-import PeopleContainer from '../containers/PeopleContainer'
+import People from '../components/People'
 import About from '../components/About'
 import NoMatch from '../components/NoMatch'
+import * as Routes from '../routes'
 
 const App = () => (
   <BrowserRouter>
@@ -13,9 +14,9 @@ const App = () => (
         <li><Link to="/about">About</Link></li>
       </ul>
       <hr />
-      <Match exactly pattern="/" render={() => (<Redirect to="/people" />)} />
-      <Match pattern="/people" component={PeopleContainer} />
-      <Match pattern="/about" component={About} />
+      <Match exactly pattern="/" render={() => (<Redirect to={Routes.PEOPLE} />)} />
+      <Match pattern={Routes.PEOPLE} component={People} />
+      <Match pattern={Routes.ABOUT} component={About} />
       <Miss component={NoMatch} />
     </div>
   </BrowserRouter>

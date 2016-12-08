@@ -6,9 +6,9 @@ const PeopleList = ({
     page,
     onNextClick,
     onPrevClick,
-    onPersonClick,
     isLoading,
-    isError}) => (
+    isError,
+    location}) => (
   <div>
     <table>
       <thead>
@@ -20,8 +20,7 @@ const PeopleList = ({
       </thead>
       <tbody>
         {people.map(person => {
-          return (<PersonItem key={person.id} person={person}
-            onClick={() => { onPersonClick(person.id) }} />)
+          return (<PersonItem key={person.id} person={person} location={location} />)
           }
         )}
       </tbody>
