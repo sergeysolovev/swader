@@ -1,6 +1,7 @@
 import React, { PropTypes, Component } from 'react'
-import PeopleList from '../components/PeopleList'
+import { Link } from 'react-router'
 import Api, {fetchPeople} from '../middleware/api'
+import { getPersonPath } from '../routes'
 import Url from 'url'
 import _ from 'lodash'
 
@@ -68,29 +69,58 @@ export default class PeopleListContainer extends Component {
     this.refreshData();
   }
   render() {
-    let prevPage = this.state.prevPage;
-    let nextPage = this.state.nextPage;
-    let isPageChanging = this.state.isPageChanging;
-    let onPrevClick = (!isPageChanging && prevPage) ?
-      this.onPrevClick : null;
-    let onNextClick = (!isPageChanging && nextPage) ?
-      this.onNextClick : null;
-    let people = this.state.people;
-    const {isLoading, isError} = this.state;
+    const {isLoading, isError, page,
+      prevPage, nextPage, isPageChanging,
+      people } = this.state;
     const location = this.props.location || {};
     location.state = Object.assign({}, location.state,
       {page: this.state.page});
+    const onPrevClick = (!isPageChanging && prevPage) && this.onPrevClick;
+    let onNextClick = (!isPageChanging && nextPage) && this.onNextClick;
     return (
       <div>
         <input type='text' onChange={this.onFilterChange}
           value={this.state.filter} />
-        <PeopleList people={this.state.people}
-          page={this.state.page}
-          onPrevClick={onPrevClick}
-          onNextClick={onNextClick}
-          isLoading={isLoading}
-          isError={isError}
-          location={location} />
+        <div>
+          <table>
+            <thead>
+              <tr>
+                <th>name</th>
+                <th>gender</th>
+                <th>height (cm)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {people.map(person =>
+                (
+                  <tr key={person.id}>
+                    <td>
+                      <Link to={{
+                        pathname: getPersonPath(person.id),
+                        state: location.state
+                      }}>{person.name}</Link>
+                    </td>
+                    <td>{person.gender}</td>
+                    <td>{person.height}</td>
+                  </tr>
+                )
+              )}
+            </tbody>
+          </table>
+          {onPrevClick ?
+            <a href='#' onClick={onPrevClick}>prev page</a> :
+            <span>prev page</span>
+          }
+          <span> | </span>
+          {onNextClick ?
+            <a href='#' onClick={onNextClick}>next page</a> :
+            <span>next page</span>
+          }
+          <span> | page #{page}</span>
+          <br />
+          {isLoading ? <span>Is loading...</span> : ' '}
+          {isError ? <span>error!</span> : ' '}
+        </div>
       </div>
     );
   }

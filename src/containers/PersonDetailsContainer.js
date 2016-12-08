@@ -25,7 +25,6 @@ export default class PersonDetailsContainer extends React.Component {
   }
   render() {
     const {location} = this.props;
-    console.log('loc', location)
     const {isLoading, isError} = this.state;
     const person = this.state.person || {name: '', gender: '', heigth: ''};
     return (
@@ -42,10 +41,5 @@ export default class PersonDetailsContainer extends React.Component {
         {isError ? <span>error!</span> : ''}
       </div>
     );
-
-    // return <PersonDetails {...this.props}
-    //   person={person}
-    //   isLoading={isLoading}
-    //   isError={isError} />;
   }
 }
