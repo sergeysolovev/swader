@@ -19,6 +19,7 @@ export default class PeopleListContainer extends Component {
       prevPage: undefined,
       page: this.props.page,
       isPageChanging: false,
+      isLoading: false
     };
     this.onNextClick = this.onNextClick.bind(this);
     this.onPrevClick = this.onPrevClick.bind(this);
@@ -27,10 +28,11 @@ export default class PeopleListContainer extends Component {
     this.refreshDataDelayed = _.debounce(this.refreshData, 200);
   }
   refreshData(filter = this.state.filter, page = this.state.page, state = {}) {
+    this.setState({isLoading: true});
     fetchPeople(filter, page)
       .then(data => {
         if (filter === this.state.filter) {
-          this.setState(Object.assign({}, data, state));
+          this.setState(Object.assign({}, data, state, {isLoading: false}));
         }});
   }
   onNextClick() {
@@ -73,6 +75,7 @@ export default class PeopleListContainer extends Component {
       this.onNextClick : null;
     let onPersonClick = this.props.onPersonClick;
     let people = this.state.people;
+    const {isLoading} = this.state;
     return (
       <div>
         <input type='text' onChange={this.onFilterChange}
@@ -81,7 +84,8 @@ export default class PeopleListContainer extends Component {
           page={this.state.page}
           onPrevClick={onPrevClick}
           onNextClick={onNextClick}
-          onPersonClick={onPersonClick} />
+          onPersonClick={onPersonClick}
+          isLoading={isLoading} />
       </div>
     );
   }

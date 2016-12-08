@@ -6,7 +6,8 @@ const PeopleList = ({
     page,
     onNextClick,
     onPrevClick,
-    onPersonClick}) => (
+    onPersonClick,
+    isLoading}) => (
   <div>
     <table>
       <thead>
@@ -34,6 +35,8 @@ const PeopleList = ({
       <span>next page</span>
     }
     <span> | page #{page}</span>
+    <br />
+    {isLoading ? <span>Is loading...</span> : ' '}
   </div>
 );
 
