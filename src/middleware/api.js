@@ -1,7 +1,7 @@
 import Url from 'url'
 
 const API_ROOT = 'http://swapi.co/api/'
-const RESOURCE_TYPES = ['people', 'planets']
+const RESOURCE_TYPES = ['people', 'planets', 'starships']
 
 export const fetchResources = (resourceType, filter, page) => {
   validateResourceType(resourceType);
