@@ -1,14 +1,16 @@
 import Url from 'url'
 
 const API_ROOT = 'http://swapi.co/api/'
+const RESOURCE_TYPES = ['people', 'planets']
 
-export const fetchPeople = (filter, page) => {
-  let url = 'people/'
+export const fetchResources = (resourceType, filter, page) => {
+  validateResourceType(resourceType);
+  let url = `${resourceType}/`
     + (filter ? `?search=${encodeURI(filter)}` : '')
     + (page && !filter ? `?page=${page}` : '');
   return api(url)
     .then(json => ({
-       people: json.results.map(item => getPerson(item)),
+       items: json.results.map(resource => extendWithId(resource)),
        url: url,
        nextPageUrl: json.next,
        prevPageUrl: json.previous,
@@ -18,33 +20,11 @@ export const fetchPeople = (filter, page) => {
     .catch(error => ({isError: true}));
 }
 
-export const fetchPlanets = (filter, page) => {
-  let url = 'planets/'
-    + (filter ? `?search=${encodeURI(filter)}` : '')
-    + (page && !filter ? `?page=${page}` : '');
+export const fetchResource = (resourceType, resourceId) => {
+  validateResourceType(resourceType);
+  let url = `${resourceType}/${resourceId}/`;
   return api(url)
-    .then(json => ({
-       planets: json.results.map(item => getPlanet(item)),
-       url: url,
-       nextPageUrl: json.next,
-       prevPageUrl: json.previous,
-       nextPage: getPageNumberFromUrl(json.next),
-       prevPage: getPageNumberFromUrl(json.previous),
-       page: getCurrentPageNumber(json.next, json.previous) }))
-    .catch(error => ({isError: true}));
-}
-
-export const fetchPerson = (personId) => {
-  let url = `people/${personId}/`;
-  return api(url)
-    .then(json => ({person: json}))
-    .catch(error => ({isError: true}));
-}
-
-export const fetchPlanet = (planetId) => {
-  let url = `planets/${planetId}/`;
-  return api(url)
-    .then(json => ({person: json}))
+    .then(json => ({item: json}))
     .catch(error => ({isError: true}));
 }
 
@@ -56,19 +36,17 @@ const api = endpoint => {
     .then(response => response.json());
 }
 
-const getPerson = personData =>
-  Object.assign({}, personData, {id: getPersonId(personData)});
-
-const getPersonId = (person) => {
-  let urlSplitted = person.url.split('/');
-  return urlSplitted[urlSplitted.length - 2];
+const validateResourceType = resourceType => {
+  if (!(RESOURCE_TYPES.includes(resourceType))) {
+    return Promise.reject({isError: true});
+  }
 }
 
-const getPlanet = planetData =>
-  Object.assign({}, planetData, {id: getPlanetId(planetData)});
+const extendWithId = resource =>
+  Object.assign({}, resource, {id: getResourceId(resource)});
 
-const getPlanetId = (planet) => {
-  let urlSplitted = planet.url.split('/');
+const getResourceId = (resource) => {
+  let urlSplitted = resource.url.split('/');
   return urlSplitted[urlSplitted.length - 2];
 }
 

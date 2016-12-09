@@ -1,11 +1,12 @@
 import React, { PropTypes, Component } from 'react'
 import { Link } from 'react-router'
-import Api, {fetchPlanets} from '../middleware/api'
-import { getPlanetPath } from '../routes'
+import Api, { fetchResources } from '../middleware/api'
+import { getResourcePath } from '../routes'
 import Url from 'url'
 import _ from 'lodash'
 
 const FILTER_SHOW_ALL = ''
+const RESOURCE_TYPE = 'planets'
 
 export default class PlanetList extends Component {
   static propTypes = {
@@ -16,7 +17,7 @@ export default class PlanetList extends Component {
     const {location} = this.props;
     this.state = {
       filter: FILTER_SHOW_ALL,
-      planets: [],
+      items: [],
       nextPage: undefined,
       prevPage: undefined,
       page: location && location.state && location.state.page,
@@ -32,7 +33,7 @@ export default class PlanetList extends Component {
   }
   refreshData(filter = this.state.filter, page = this.state.page, state = {}) {
     this.setState({isLoading: true});
-    fetchPlanets(filter, page)
+    fetchResources(RESOURCE_TYPE, filter, page)
       .then(data => {
         if (filter === this.state.filter) {
           this.setState(Object.assign({}, data, state, {isLoading: false}));
@@ -71,7 +72,7 @@ export default class PlanetList extends Component {
   render() {
     const {isLoading, isError, page,
       prevPage, nextPage, isPageChanging,
-      planets } = this.state;
+      items } = this.state;
     const location = this.props.location || {};
     location.state = Object.assign({}, location.state,
       {page: this.state.page});
@@ -92,18 +93,18 @@ export default class PlanetList extends Component {
               </tr>
             </thead>
             <tbody>
-              {planets.map(planet =>
+              {items.map(item =>
                 (
-                  <tr key={planet.id}>
+                  <tr key={item.id}>
                     <td>
                       <Link to={{
-                        pathname: getPlanetPath(planet.id),
+                        pathname: getResourcePath(RESOURCE_TYPE, item.id),
                         state: location.state
-                      }}>{planet.name}</Link>
+                      }}>{item.name}</Link>
                     </td>
-                    <td>{planet.population}</td>
-                    <td>{planet.terrain}</td>
-                    <td>{planet.diameter}</td>
+                    <td>{item.population}</td>
+                    <td>{item.terrain}</td>
+                    <td>{item.diameter}</td>
                   </tr>
                 )
               )}
