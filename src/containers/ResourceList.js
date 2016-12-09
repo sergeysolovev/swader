@@ -22,7 +22,6 @@ export default class PeopleList extends Component {
       nextPage: undefined,
       prevPage: undefined,
       page: location && location.state && location.state.page,
-      isPageChanging: false,
       isLoading: false,
       isError: false
     };
@@ -43,23 +42,13 @@ export default class PeopleList extends Component {
   onNextClick() {
     let nextPage = this.state.nextPage;
     if (nextPage) {
-      let onChangePageClick = this.props.onChangePageClick;
-      if (onChangePageClick) {
-        onChangePageClick(nextPage);
-      }
-      this.setState({isPageChanging: true});
-      this.refreshData(FILTER_SHOW_ALL, nextPage, {isPageChanging: false});
+      this.refreshData(FILTER_SHOW_ALL, nextPage);
     }
   }
   onPrevClick() {
     let prevPage = this.state.prevPage;
     if (prevPage) {
-      let onChangePageClick = this.props.onChangePageClick;
-      if (onChangePageClick) {
-        onChangePageClick(prevPage);
-      }
-      this.setState({isPageChanging: true});
-      this.refreshData(FILTER_SHOW_ALL, prevPage, {isPageChanging: false});
+      this.refreshData(FILTER_SHOW_ALL, prevPage);
     }
   }
   onFilterChange(event) {
@@ -77,8 +66,8 @@ export default class PeopleList extends Component {
     const location = this.props.location || {};
     location.state = Object.assign({}, location.state,
       {page: this.state.page});
-    const onPrevClick = (!isPageChanging && prevPage) && this.onPrevClick;
-    const onNextClick = (!isPageChanging && nextPage) && this.onNextClick;
+    const onPrevClick = (!isLoading && prevPage) && this.onPrevClick;
+    const onNextClick = (!isLoading && nextPage) && this.onNextClick;
     const { resourceType, itemComponent } = this.props;
     return (
       <div>
