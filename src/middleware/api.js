@@ -24,7 +24,7 @@ export const fetchResource = (resourceType, resourceId) => {
   validateResourceType(resourceType);
   let url = `${resourceType}/${resourceId}/`;
   return api(url)
-    .then(json => ({item: json}))
+    .then(json => extendWithId(json))
     .catch(error => ({isError: true}));
 }
 
@@ -47,6 +47,11 @@ const extendWithId = resource =>
 
 const getResourceId = (resource) => {
   let urlSplitted = resource.url.split('/');
+  return urlSplitted[urlSplitted.length - 2];
+}
+
+export const getUrlId = (url) => {
+  let urlSplitted = url.split('/');
   return urlSplitted[urlSplitted.length - 2];
 }
 

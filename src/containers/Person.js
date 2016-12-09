@@ -1,9 +1,9 @@
 import React, { Component, PropTypes } from 'react'
 import { Link } from 'react-router'
-import Api, { fetchResource } from '../middleware/api'
+import Api, { fetchResource, getUrlId } from '../middleware/api'
 import * as Routes from '../routes'
-
-const RESOURCE_TYPE = 'people'
+import ResourceSimpleList from '../components/ResourceSimpleList'
+import StarshipItem from '../components/StarshipItem'
 
 export default class Person extends React.Component {
   static propTypes = {
@@ -12,7 +12,8 @@ export default class Person extends React.Component {
   constructor() {
     super();
     this.state = {
-      item: undefined,
+      person: undefined,
+      starships: [],
       isLoading: false,
       isError: false
     }
@@ -20,20 +21,36 @@ export default class Person extends React.Component {
   componentWillMount() {
     const {params} = this.props;
     this.setState({isLoading: true});
-    fetchResource(RESOURCE_TYPE, params.personId)
-      .then(data => this.setState(
-        Object.assign({}, data, {isLoading: false})
-      ));
+    fetchResource('people', params.personId)
+      .then(person => {
+        this.setState({person, isLoading: false});
+        this.loadPersonStarships(person);
+      });
+  }
+  loadPersonStarships(person) {
+    if (person.starships) {
+      Promise
+        .all(person.starships
+          .map(starshipUrl => getUrlId(starshipUrl))
+          .map(starshipId => fetchResource('starships', starshipId)))
+        .then(starships => this.setState({starships}));
+    }
   }
   render() {
     const {location} = this.props;
-    const {isLoading, isError} = this.state;
-    const item = this.state.item || {name: '', gender: '', heigth: ''};
+    const {isLoading, isError, starships} = this.state;
+    const person = this.state.person || {name: '', gender: '', heigth: ''};
     return (
       <div>
-        <h1>Name: {item.name}</h1>
-        <h2>Gender: {item.gender}</h2>
-        <h2>Height: {item.height}</h2>
+        <h2>{person.name}</h2>
+        <h3>Gender: {person.gender}</h3>
+        <h3>Height: {person.height}</h3>
+        <h3>Starships</h3>
+        <ResourceSimpleList resourceType='starships'
+          itemComponent={StarshipItem}
+          items={starships}
+          location={location} />
+        <br />
         <Link to={{
           pathname: Routes.PEOPLE,
           state: location.state

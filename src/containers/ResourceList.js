@@ -4,6 +4,7 @@ import Api, { fetchResources } from '../middleware/api'
 import { getResourcePath } from '../routes'
 import Url from 'url'
 import _ from 'lodash'
+import ResourceSimpleList from '../components/ResourceSimpleList'
 
 const FILTER_SHOW_ALL = ''
 
@@ -84,23 +85,10 @@ export default class PeopleList extends Component {
         <input type='text' onChange={this.onFilterChange}
           value={this.state.filter} />
         <div>
-          <table>
-            <thead>
-              {React.createElement(itemComponent, {isHeader: true})}
-            </thead>
-            <tbody>
-              {items.map(item =>
-                React.createElement(itemComponent, {
-                  key: item.id,
-                  item: item,
-                  linkLocation: {
-                    pathname: getResourcePath(resourceType, item.id),
-                    state: location.state
-                  }
-                })
-              )}
-            </tbody>
-          </table>
+          <ResourceSimpleList resourceType={resourceType}
+            itemComponent={itemComponent}
+            items={items}
+            location={location} />
           {onPrevClick ?
             <a href='#' onClick={onPrevClick}>prev page</a> :
             <span>prev page</span>
