@@ -18,8 +18,31 @@ export const fetchPeople = (filter, page) => {
     .catch(error => ({isError: true}));
 }
 
+export const fetchPlanets = (filter, page) => {
+  let url = 'planets/'
+    + (filter ? `?search=${encodeURI(filter)}` : '')
+    + (page && !filter ? `?page=${page}` : '');
+  return api(url)
+    .then(json => ({
+       planets: json.results.map(item => getPlanet(item)),
+       url: url,
+       nextPageUrl: json.next,
+       prevPageUrl: json.previous,
+       nextPage: getPageNumberFromUrl(json.next),
+       prevPage: getPageNumberFromUrl(json.previous),
+       page: getCurrentPageNumber(json.next, json.previous) }))
+    .catch(error => ({isError: true}));
+}
+
 export const fetchPerson = (personId) => {
   let url = `people/${personId}/`;
+  return api(url)
+    .then(json => ({person: json}))
+    .catch(error => ({isError: true}));
+}
+
+export const fetchPlanet = (planetId) => {
+  let url = `planets/${planetId}/`;
   return api(url)
     .then(json => ({person: json}))
     .catch(error => ({isError: true}));
@@ -38,6 +61,14 @@ const getPerson = personData =>
 
 const getPersonId = (person) => {
   let urlSplitted = person.url.split('/');
+  return urlSplitted[urlSplitted.length - 2];
+}
+
+const getPlanet = planetData =>
+  Object.assign({}, planetData, {id: getPlanetId(planetData)});
+
+const getPlanetId = (planet) => {
+  let urlSplitted = planet.url.split('/');
   return urlSplitted[urlSplitted.length - 2];
 }
 
