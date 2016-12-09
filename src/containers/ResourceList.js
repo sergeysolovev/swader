@@ -6,10 +6,10 @@ import Url from 'url'
 import _ from 'lodash'
 
 const FILTER_SHOW_ALL = ''
-const RESOURCE_TYPE = 'people'
 
 export default class PeopleList extends Component {
   static propTypes = {
+    resourceType: PropTypes.string.isRequired,
     page: PropTypes.number
   }
   constructor(props) {
@@ -33,7 +33,7 @@ export default class PeopleList extends Component {
   }
   refreshData(filter = this.state.filter, page = this.state.page, state = {}) {
     this.setState({isLoading: true});
-    fetchResources(RESOURCE_TYPE, filter, page)
+    fetchResources(this.props.resourceType, filter, page)
       .then(data => {
         if (filter === this.state.filter) {
           this.setState(Object.assign({}, data, state, {isLoading: false}));
@@ -77,7 +77,8 @@ export default class PeopleList extends Component {
     location.state = Object.assign({}, location.state,
       {page: this.state.page});
     const onPrevClick = (!isPageChanging && prevPage) && this.onPrevClick;
-    let onNextClick = (!isPageChanging && nextPage) && this.onNextClick;
+    const onNextClick = (!isPageChanging && nextPage) && this.onNextClick;
+    const { resourceType, itemComponent } = this.props;
     return (
       <div>
         <input type='text' onChange={this.onFilterChange}
@@ -85,26 +86,18 @@ export default class PeopleList extends Component {
         <div>
           <table>
             <thead>
-              <tr>
-                <th>name</th>
-                <th>gender</th>
-                <th>height (cm)</th>
-              </tr>
+              {React.createElement(itemComponent, {isHeader: true})}
             </thead>
             <tbody>
               {items.map(item =>
-                (
-                  <tr key={item.id}>
-                    <td>
-                      <Link to={{
-                        pathname: getResourcePath(RESOURCE_TYPE, item.id),
-                        state: location.state
-                      }}>{item.name}</Link>
-                    </td>
-                    <td>{item.gender}</td>
-                    <td>{item.height}</td>
-                  </tr>
-                )
+                React.createElement(itemComponent, {
+                  key: item.id,
+                  item: item,
+                  linkLocation: {
+                    pathname: getResourcePath(resourceType, item.id),
+                    state: location.state
+                  }
+                })
               )}
             </tbody>
           </table>

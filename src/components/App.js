@@ -1,7 +1,9 @@
 import React from 'react'
 import { BrowserRouter, Match, Miss, Link, Redirect } from 'react-router'
-import People from '../components/People'
-import PlanetList from '../containers/PlanetList'
+import ResourceList from '../containers/ResourceList'
+import PlanetItem from '../components/PlanetItem'
+import PeopleItem from '../components/PeopleItem'
+import Person from '../containers/Person'
 import About from '../components/About'
 import NoMatch from '../components/NoMatch'
 import * as Routes from '../routes'
@@ -11,15 +13,18 @@ const App = () => (
     <div>
       <ul>
         <li><Link to="/">Home</Link></li>
-        <li><Link to="/people">People</Link></li>
-        <li><Link to="/planets">Planets</Link></li>
-        <li><Link to="/about">About</Link></li>
+        <li><Link to={Routes.PEOPLE}>People</Link></li>
+        <li><Link to={Routes.PLANETS}>Planets</Link></li>
+        <li><Link to={Routes.ABOUT}>About</Link></li>
       </ul>
       <hr />
       <Match exactly pattern="/" render={() => (<Redirect to={Routes.PEOPLE} />)} />
-      <Match pattern={Routes.PEOPLE} component={People} />
+      <Match pattern={`${Routes.PEOPLE}/:personId`} component={Person} />
+      <Match exactly pattern={Routes.PEOPLE} render={() =>
+        <ResourceList resourceType='people' itemComponent={PeopleItem} />} />
+      <Match exactly pattern={Routes.PLANETS} render={() =>
+        <ResourceList resourceType='planets' itemComponent={PlanetItem} />} />
       <Match pattern={Routes.ABOUT} component={About} />
-      <Match pattern={Routes.PLANETS} exactly component={PlanetList} />
       <Miss component={NoMatch} />
     </div>
   </BrowserRouter>
