@@ -22,12 +22,18 @@ const App = () => (
       <hr />
       <Match exactly pattern="/" render={() => (<Redirect to={Routes.PEOPLE} />)} />
       <Match pattern={`${Routes.PEOPLE}/:personId`} component={Person} />
-      <Match exactly pattern={Routes.PEOPLE} render={() =>
-        <ResourceList resourceType='people' itemComponent={PeopleItem} />} />
-      <Match exactly pattern={Routes.PLANETS} render={() =>
-        <ResourceList resourceType='planets' itemComponent={PlanetItem} />} />
-      <Match exactly pattern={Routes.STARSHIPS} render={() =>
-        <ResourceList resourceType='starships' itemComponent={StarshipItem} />} />
+      <Match exactly pattern={Routes.PEOPLE} render={(matchProps) =>
+        <ResourceList {...matchProps}
+          resourceType='people'
+          itemComponent={PeopleItem} />} />
+      <Match exactly pattern={Routes.PLANETS} render={(matchProps) =>
+        <ResourceList {...matchProps}
+          resourceType='planets'
+          itemComponent={PlanetItem} />} />
+      <Match exactly pattern={Routes.STARSHIPS} render={(matchProps) =>
+        <ResourceList {...matchProps}
+          resourceType='starships'
+          itemComponent={StarshipItem} />} />
       <Match pattern={Routes.ABOUT} component={About} />
       <Miss component={NoMatch} />
     </div>
