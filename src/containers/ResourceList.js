@@ -8,7 +8,7 @@ import ResourceSimpleList from '../components/ResourceSimpleList'
 
 const FILTER_SHOW_ALL = ''
 
-export default class PeopleList extends Component {
+export default class ResourceList extends Component {
   static propTypes = {
     resourceType: PropTypes.string.isRequired,
     page: PropTypes.number
