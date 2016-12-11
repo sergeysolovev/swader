@@ -6,6 +6,8 @@ import Url from 'url'
 import _ from 'lodash'
 import ResourceSimpleList from '../components/ResourceSimpleList'
 
+import { Input } from 'semantic-ui-react'
+
 const FILTER_SHOW_ALL = ''
 
 export default class ResourceList extends Component {
@@ -71,27 +73,20 @@ export default class ResourceList extends Component {
     const { resourceType, itemComponent } = this.props;
     return (
       <div>
-        <input type='text' onChange={this.onFilterChange}
-          value={this.state.filter} />
-        <div>
-          <ResourceSimpleList resourceType={resourceType}
-            itemComponent={itemComponent}
-            items={items}
-            location={location} />
-          {onPrevClick ?
-            <a href='#' onClick={onPrevClick}>prev page</a> :
-            <span>prev page</span>
-          }
-          <span> | </span>
-          {onNextClick ?
-            <a href='#' onClick={onNextClick}>next page</a> :
-            <span>next page</span>
-          }
-          <span> | page #{page}</span>
-          <br />
-          {isLoading ? <span>Is loading...</span> : ' '}
-          {isError ? <span>error!</span> : ' '}
-        </div>
+        <Input placeholder='Search...' size='small'
+          className='searchBox'
+          value={this.state.filter}
+          onChange={this.onFilterChange}
+        />
+        <ResourceSimpleList resourceType={resourceType}
+          itemComponent={itemComponent}
+          items={items}
+          location={location}
+          onNextClick={onNextClick}
+          onPrevClick={onPrevClick}
+          page={page}
+          isLoading={isLoading}
+          isError={isError} />
       </div>
     );
   }
