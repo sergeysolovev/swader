@@ -1,6 +1,5 @@
 import React from 'react'
 import { Link } from 'react-router'
-import { Table } from 'semantic-ui-react'
 
 export const columns = 3;
 
@@ -14,21 +13,21 @@ export default class PeopleItem extends React.Component {
     const {item, linkLocation, isHeader} = this.props;
     if (isHeader) {
       return (
-        <Table.Row>
-          <Table.HeaderCell>name</Table.HeaderCell>
-          <Table.HeaderCell>gender</Table.HeaderCell>
-          <Table.HeaderCell>height (cm)</Table.HeaderCell>
-        </Table.Row>
+        <tr>
+          <th>name</th>
+          <th>gender</th>
+          <th>height (cm)</th>
+        </tr>
       );
     } else {
       return (
-        <Table.Row>
-          <Table.Cell>
+        <tr>
+          <td>
             <Link to={linkLocation}>{item.name}</Link>
-          </Table.Cell>
-          <Table.Cell>{item.gender}</Table.Cell>
-          <Table.Cell>{item.height}</Table.Cell>
-        </Table.Row>
+          </td>
+          <td>{item.gender}</td>
+          <td>{item.height}</td>
+        </tr>
       )
     }
   }

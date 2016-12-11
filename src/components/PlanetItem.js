@@ -1,5 +1,4 @@
 import React from 'react'
-import { Table } from 'semantic-ui-react'
 import { Link } from 'react-router'
 
 export default class PlanetItem extends React.Component {
@@ -12,23 +11,23 @@ export default class PlanetItem extends React.Component {
     const {item, linkLocation, isHeader} = this.props;
     if (isHeader) {
       return (
-        <Table.Row>
-          <Table.HeaderCell>name</Table.HeaderCell>
-          <Table.HeaderCell>population</Table.HeaderCell>
-          <Table.HeaderCell>terrain</Table.HeaderCell>
-          <Table.HeaderCell>diameter</Table.HeaderCell>
-        </Table.Row>
+        <tr>
+          <th>name</th>
+          <th>population</th>
+          <th>terrain</th>
+          <th>diameter</th>
+        </tr>
       );
     } else {
       return (
-        <Table.Row>
-          <Table.Cell>
+        <tr>
+          <td>
             <Link to={linkLocation}>{item.name}</Link>
-          </Table.Cell>
-          <Table.Cell>{item.population}</Table.Cell>
-          <Table.Cell>{item.terrain}</Table.Cell>
-          <Table.Cell>{item.diameter}</Table.Cell>
-        </Table.Row>
+          </td>
+          <td>{item.population}</td>
+          <td>{item.terrain}</td>
+          <td>{item.diameter}</td>
+        </tr>
       )
     }
   }

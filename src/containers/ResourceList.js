@@ -6,8 +6,6 @@ import Url from 'url'
 import debounce from 'lodash/debounce'
 import ResourceSimpleList from '../components/ResourceSimpleList'
 
-import { Input } from 'semantic-ui-react'
-
 const FILTER_SHOW_ALL = ''
 
 export default class ResourceList extends Component {
@@ -73,7 +71,7 @@ export default class ResourceList extends Component {
     const { resourceType, itemComponent } = this.props;
     return (
       <div>
-        <Input placeholder='Search...' size='small'
+        <input type='text'
           className='searchBox'
           value={this.state.filter}
           onChange={this.onFilterChange}

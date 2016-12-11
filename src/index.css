@@ -1,9 +1,6 @@
 body {
   margin: 20px;
-}
-
-.searchBox {
-  margin-bottom: 14px
+  font-family: sans-serif;
 }
 
 .pager {

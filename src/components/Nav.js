@@ -1,30 +1,26 @@
 import React from 'react'
-import { Menu, Dropdown } from 'semantic-ui-react'
 import { Link } from 'react-router'
 
 const Nav = () => (
-  <Menu>
-    <Link to='/' isActive={location => location.pathname === '/'}>{
-      ({isActive, onClick}) =>
-        <Menu.Item onClick={onClick} active={isActive}>Home</Menu.Item>
-    }</Link>
-    <Link to='/people'>{
-      ({isActive, onClick}) =>
-        <Menu.Item onClick={onClick} active={isActive}>People</Menu.Item>
-    }</Link>
-    <Link to='/starships'>{
-      ({isActive, onClick}) =>
-        <Menu.Item onClick={onClick} active={isActive}>Starships</Menu.Item>
-    }</Link>
-    <Link to='/planets'>{
-      ({isActive, onClick}) =>
-        <Menu.Item onClick={onClick} active={isActive}>Planets</Menu.Item>
-    }</Link>
-    <Link to='/about'>{
-      ({isActive, onClick}) =>
-        <Menu.Item onClick={onClick} active={isActive}>About</Menu.Item>
-    }</Link>
-  </Menu>
+  <nav>
+    <ul>
+      <li>
+        <Link to='/' isActive={location => location.pathname === '/'}>Home</Link>
+      </li>
+      <li>
+        <Link to='/people'>People</Link>
+      </li>
+      <li>
+        <Link to='/starships'>Starships</Link>
+      </li>
+      <li>
+        <Link to='/planets'>Planets</Link>
+      </li>
+      <li>
+        <Link to='/about'>About</Link>
+      </li>
+    </ul>
+  </nav>
 )
 
 export default Nav

@@ -1,16 +1,15 @@
 import React from 'react'
-import { Table, Menu, Icon } from 'semantic-ui-react'
 import { getResourcePath } from '../routes'
 
 const ResourceSimpleList = ({resourceType,
   items, itemComponent, location, onPrevClick, onNextClick, page,
   isLoading, isError}) => (
   <div>
-    <Table selectable unstackable compact collapsing>
-      <Table.Header>
+    <table>
+      <thead>
         {React.createElement(itemComponent, {isHeader: true})}
-      </Table.Header>
-      <Table.Body>
+      </thead>
+      <tbody>
         {items.map(item =>
           React.createElement(itemComponent, {
             key: item.id,
@@ -21,8 +20,8 @@ const ResourceSimpleList = ({resourceType,
             }
           })
         )}
-      </Table.Body>
-    </Table>
+      </tbody>
+    </table>
     <div className='pager'>
       {onPrevClick ?
         <a href='#' onClick={onPrevClick}>prev</a> :

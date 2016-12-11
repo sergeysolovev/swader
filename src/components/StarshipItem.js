@@ -1,5 +1,4 @@
 import React from 'react'
-import { Table } from 'semantic-ui-react'
 import { Link } from 'react-router'
 
 export default class StarshipItem extends React.Component {
@@ -12,19 +11,19 @@ export default class StarshipItem extends React.Component {
     const {item, linkLocation, isHeader} = this.props;
     if (isHeader) {
       return (
-        <Table.Row>
-          <Table.HeaderCell>name</Table.HeaderCell>
-          <Table.HeaderCell>model</Table.HeaderCell>
-        </Table.Row>
+        <tr>
+          <th>name</th>
+          <th>model</th>
+        </tr>
       );
     } else {
       return (
-        <Table.Row>
-          <Table.Cell>
+        <tr>
+          <td>
             <Link to={linkLocation}>{item.name}</Link>
-          </Table.Cell>
-          <Table.Cell>{item.model}</Table.Cell>
-        </Table.Row>
+          </td>
+          <td>{item.model}</td>
+        </tr>
       )
     }
   }
