@@ -3,7 +3,7 @@ import { Link } from 'react-router'
 import Api, { fetchResources } from '../middleware/api'
 import { getResourcePath } from '../routes'
 import Url from 'url'
-import _ from 'lodash'
+import debounce from 'lodash/debounce'
 import ResourceSimpleList from '../components/ResourceSimpleList'
 
 import { Input } from 'semantic-ui-react'
@@ -31,7 +31,7 @@ export default class ResourceList extends Component {
     this.onPrevClick = this.onPrevClick.bind(this);
     this.onFilterChange = this.onFilterChange.bind(this);
     this.refreshData = this.refreshData.bind(this);
-    this.refreshDataDelayed = _.debounce(this.refreshData, 200);
+    this.refreshDataDelayed = debounce(this.refreshData, 200);
   }
   refreshData(filter = this.state.filter, page = this.state.page, state = {}) {
     this.setState({isLoading: true});
