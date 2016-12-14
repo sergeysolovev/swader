@@ -9,10 +9,10 @@ const App = () => (
       <header>
         <Nav />
       </header>
-      <section>
+      <section className='container'>
         <Main />
       </section>
-      <footer>
+      <footer className='container'>
       </footer>
     </div>
   </BrowserRouter>

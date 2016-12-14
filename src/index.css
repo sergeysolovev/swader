@@ -1,4 +1,5 @@
 /* general */
+
 /* grid */
 *,
 *:before,
@@ -6,6 +7,12 @@
   -webkit-box-sizing: border-box;
      -moz-box-sizing: border-box;
           box-sizing: border-box;
+}
+.container {
+  margin: 0 auto;
+  padding-left: 30px;
+  padding-right: 30px;
+  max-width: 960px;
 }
 
 /* clearfix */
@@ -25,7 +32,36 @@
 /* rows */
 /* typography */
 /* links */
+a {
+  text-decoration: none;
+}
+
 /* buttons */
+
 /* navigation */
+.nav {
+  line-height: 44px;
+  margin-bottom: 22px;
+}
+.nav li {
+  display: inline-block;
+  margin-right: 22px;
+}
+.nav li:last-child {
+  margin-right: 0;
+}
+.nav-link {
+  padding: 2px;
+}
+.nav-link-active {
+  border-bottom: 2px solid black;
+}
+.nav-link:hover {
+  border-bottom: 2px solid gray;
+}
+.nav a {
+  color: #000;
+}
+
 /* header */
 /* footer */
