@@ -1,8 +1,31 @@
-body {
-  margin: 20px;
-  font-family: sans-serif;
+/* general */
+/* grid */
+*,
+*:before,
+*:after {
+  -webkit-box-sizing: border-box;
+     -moz-box-sizing: border-box;
+          box-sizing: border-box;
 }
 
-.pager {
-  padding-left: 3px;
+/* clearfix */
+.group:before,
+.group:after {
+  content: "";
+  display: table;
 }
+.group:after {
+  clear: both;
+}
+.group {
+  clear: both;
+  *zoom: 1;
+}
+
+/* rows */
+/* typography */
+/* links */
+/* buttons */
+/* navigation */
+/* header */
+/* footer */
