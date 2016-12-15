@@ -1,4 +1,7 @@
 /* general */
+body {
+  font: 300 16px/22px "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
 
 /* grid */
 *,
@@ -31,12 +34,44 @@
 
 /* rows */
 /* typography */
+h1, h2, h3, h4 {
+  color: black;
+}
+h1, h3, h4, h5, p {
+  margin-bottom: 22px;
+}
+h1 {
+  font-size: 36px;
+  line-height: 44px;
+}
+h2 {
+  font-size: 24px;
+  line-height: 44px;
+}
+strong {
+  font-weight: 400;
+}
+
 /* links */
 a {
   text-decoration: none;
 }
 
 /* buttons */
+.btn {
+  border-radius: 5px;
+  color: black;
+  cursor: pointer;
+  display: inline-block;
+  font-weight: 400;
+  letter-spacing: .5px;
+  text-transform: uppercase;
+  margin: 0;
+}
+.btn-alt {
+  border: 1px solid black;
+  padding: 0 12px;
+}
 
 /* navigation */
 .nav {
@@ -61,6 +96,21 @@ a {
 }
 .nav a {
   color: #000;
+}
+
+/* main */
+.hero {
+  text-align: center;
+  line-height: 36px;
+  padding: 0 80px;
+}
+.hero h2 {
+  font-size: 36px;
+  font-weight: 400;
+  letter-spacing: .5px;
+}
+.hero p {
+  font-size: 24px;
 }
 
 /* header */

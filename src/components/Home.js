@@ -1,13 +1,16 @@
 import React from 'react'
+import { Link } from 'react-router'
 
 const Home = () => (
-  <div>
-    <h2>Home</h2>
+  <div className='hero'>
+    <h2>SWADER</h2>
     <p>
-      <a href="https://facebook.github.io/react/">React</a> client for
-      the <a href="http://swapi.co">Star Wars API</a>.
+      Stands for The Star Wars API's Data Explorer,
+      an open source <a href="https://facebook.github.io/react/">React</a> app for exloring the data provided by <a href="http://swapi.co">The Star Wars API</a>.
     </p>
-    <h3>Available resources</h3>
+
+    <Link to='/people' className='btn btn-alt'>Start exploring</Link>
   </div>
 )
+
 export default Home
