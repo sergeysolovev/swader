@@ -70,7 +70,7 @@ export default class ResourceList extends Component {
     const onNextClick = (!isLoading && nextPage) && this.onNextClick;
     const { resourceType, itemComponent } = this.props;
     return (
-      <div>
+      <div className='container'>
         <input type='text'
           className='searchBox'
           value={this.state.filter}
