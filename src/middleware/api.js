@@ -1,7 +1,68 @@
 import Url from 'url'
 
 const API_ROOT = 'http://swapi.co/api/'
-const RESOURCE_TYPES = ['people', 'planets', 'starships']
+const RESOURCE_TYPES = [
+  'films',
+  'people',
+  'planets',
+  'starships',
+  'vehicles',
+  'species'
+];
+
+export const fetchFilms = () => {
+  return api('films/')
+    .then(json => ({ films: json.results.map(createFilm) }))
+    .catch(error => ({isError: true}));
+}
+
+const getYear = (film) => {
+  return new Date(film.release_date).getFullYear();
+}
+
+// http://eddmann.com/posts/arabic-to-roman-numerals-converter-in-javascript/
+const toRoman = (decimal) => {
+  const chart = [
+    [ 'M', 1000],
+    ['CM',  900],
+    [ 'D',  500],
+    ['CD',  400],
+    [ 'C',  100],
+    ['XC',   90],
+    [ 'L',   50],
+    ['XL',   40],
+    [ 'X',   10],
+    ['IX',    9],
+    [ 'V',    5],
+    ['IV',    4],
+    [ 'I',    1]
+  ];
+  function recur(remainder, chart) {
+    if (remainder == 0) return '';
+    const [[numeral, value], ...tail] = chart;
+    return numeral.repeat(remainder / value) + recur(remainder % value, tail);
+  };
+  return recur(decimal, chart);
+}
+
+export const loadFilmResources = (film) => {
+  const promise = (resourceType, resourceUrls, mapResultsTo) =>
+    resourceUrls ?
+      Promise.all(resourceUrls
+        .map(url => getUrlId(url))
+        .map(id => fetchResource(resourceType, id)))
+      .then(resources => Promise.resolve(mapResultsTo(resources))) :
+      Promise.resolve(mapResultsTo([]));
+  const promises = [
+    promise('people', film.characters, x => ({'characters': x})),
+    promise('planets', film.planets, x => ({'planets': x})),
+    promise('starships', film.starships, x => ({'starships': x})),
+    promise('species', film.species, x => ({'species': x})),
+    promise('vehicles', film.vehicles, x => ({'vehicles': x}))
+  ];
+  return Promise.all(promises)
+    .then(results => Object.assign({}, film, ...results));
+}
 
 export const fetchResources = (resourceType, filter, page) => {
   validateResourceType(resourceType);
@@ -28,6 +89,28 @@ export const fetchResource = (resourceType, resourceId) => {
     .catch(error => ({isError: true}));
 }
 
+export const getUrlId = (url) => {
+  let urlSplitted = url.split('/');
+  return urlSplitted[urlSplitted.length - 2];
+}
+
+const shorten = (string) => {
+  const maxLength = 200;
+  let trimmed = string.substr(0, maxLength);
+  return trimmed.substr(0,
+    Math.min(trimmed.length, trimmed.lastIndexOf(' ')));
+}
+
+const createFilm = (filmItem) => {
+  let film = extendWithId(filmItem);
+  return Object.assign({}, film, {
+    episode: toRoman(film.episode_id),
+    year: getYear(film),
+    shortOpening: shorten(film.opening_crawl.replace(/(\r\n)+/g, ' ')),
+    opening: film.opening_crawl.replace(/(\r\n)+/g, ' ')
+  });
+}
+
 const api = endpoint => {
   const fullUrl = (endpoint.indexOf(API_ROOT) === -1) ?
     API_ROOT + endpoint :
@@ -47,11 +130,6 @@ const extendWithId = resource =>
 
 const getResourceId = (resource) => {
   let urlSplitted = resource.url.split('/');
-  return urlSplitted[urlSplitted.length - 2];
-}
-
-export const getUrlId = (url) => {
-  let urlSplitted = url.split('/');
   return urlSplitted[urlSplitted.length - 2];
 }
 

@@ -10,6 +10,9 @@ const Nav = () => (
           <NavLink to='/' activeOnlyWhenExact>Home</NavLink>
         </li>
         <li>
+          <NavLink to='/films' activeOnlyWhenExact>Films</NavLink>
+        </li>
+        <li>
           <NavLink to='/people' activeOnlyWhenExact>People</NavLink>
         </li>
         <li>

@@ -9,7 +9,7 @@ const Home = () => (
       an open source <a href="https://facebook.github.io/react/">React</a> app for exloring the data provided by <a href="http://swapi.co">The Star Wars API</a>.
     </p>
 
-    <Link to='/people' className='btn btn-alt'>Start exploring</Link>
+    <Link to='/films' className='btn btn-alt'>Start exploring</Link>
   </div>
 )
 
