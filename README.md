@@ -5,4 +5,4 @@ Stands for The Star Wars API's Data Explorer, an open source [React](https://fac
 Getting hands-on experience with [React](https://facebook.github.io/react/)
 
 ## Status
-The app have just started, lots of things has to be done.
+The app has just started, lots of things have to be done.
