@@ -1,8 +1,6 @@
 import React from 'react'
 import { Link } from 'react-router'
 
-export const columns = 3;
-
 export default class PeopleItem extends React.Component {
   static propTypes = {
     item: React.PropTypes.object,
