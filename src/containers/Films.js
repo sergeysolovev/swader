@@ -35,14 +35,15 @@ export default class Films extends React.Component {
     if (isFilmsLoading) {
       return (
         <div className='container'>
-          <h1>Star Wars Film Series</h1>
-          <h2>Loading...</h2>
+          <h1>#Star Wars Film Series (Loading...)</h1>
         </div>
       );
     } else {
       return (
         <div>
-          <h1 className='container'>Star Wars Film Series</h1>
+          <div className='container'>
+            <h1>#Star Wars Film Series</h1>
+          </div>
           {films.map(film => (activeFilm && film.id === activeFilm.id) ?
               <FilmActive key={film.id}
                 film={activeFilm}
@@ -62,11 +63,9 @@ const Film = ({film, onTitleClick}) => (
   <section className='film'>
     <div className='container'>
       <a onClick={onTitleClick}>
-        <h2>
-          <span className='film-title'>
-            Episode {film.episode} – {film.title} ({film.year})
-          </span>
-        </h2>
+        <span className='film-title'>
+          ##Episode {film.episode} – {film.title} ({film.year})
+        </span>
       </a>
       <p className='film-desc'>{film.shortOpening} <a onClick={onTitleClick}>{'<...>'}</a></p>
     </div>
@@ -109,11 +108,9 @@ const FilmActive = ({film, onTitleClick, isLoading}) => (
   <section className='film film-alt'>
     <div className='container'>
       <a onClick={onTitleClick}>
-        <h2>
-          <span className='film-title'>
-            Episode {film.episode} – {film.title} ({film.year})
-          </span>
-        </h2>
+        <span className='film-title'>
+          ##Episode {film.episode} – {film.title} ({film.year})
+        </span>
       </a>
       <p className='film-desc'>{film.opening}</p>
       <hr />
