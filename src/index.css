@@ -1,6 +1,6 @@
 /* general */
 body {
-  font: 300 18px/26px "Source Sans Pro", Helvetica, sans-serif;
+  font: 300 18px/26px "Courier New", monospace;
 }
 
 /* grid */
@@ -96,19 +96,18 @@ a {
 }
 .nav li {
   display: inline-block;
-  margin-right: 22px;
 }
 .nav li:last-child {
   margin-right: 0;
 }
 .nav-link {
-  padding: 2px;
+  padding: 1px;
 }
 .nav-link-active {
-  border-bottom: 2px solid black;
+  border-bottom: 1px solid black;
 }
 .nav-link:hover {
-  border-bottom: 2px solid gray;
+  border-bottom: 1px solid gray;
 }
 .nav a {
   color: #000;

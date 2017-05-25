@@ -7,19 +7,29 @@ const Nav = () => (
     <div className='container'>
       <ul>
         <li>
-          <NavLink to='/' activeOnlyWhenExact>Films</NavLink>
+          <span>let {'{'}</span>
+          <NavLink to='/' activeOnlyWhenExact>episodes</NavLink>
+          <span>,</span>
         </li>
         <li>
-          <NavLink to='/people' activeOnlyWhenExact>People</NavLink>
+          <span>&nbsp;</span>
+          <NavLink to='/people' activeOnlyWhenExact>chars</NavLink>
+          <span>,</span>
         </li>
         <li>
-          <NavLink to='/starships'>Starships</NavLink>
+          <span>&nbsp;</span>
+          <NavLink to='/starships'>ships</NavLink>
+          <span>,</span>
         </li>
         <li>
-          <NavLink to='/planets'>Planets</NavLink>
+          <span>&nbsp;</span>
+          <NavLink to='/planets'>planets</NavLink>
+          <span>{'} ='}</span>
         </li>
         <li>
-          <NavLink to='/about'>About</NavLink>
+          <span>&nbsp;getNav(</span>
+          <NavLink to='/about'>swader.js</NavLink>
+          <span>);</span>
         </li>
       </ul>
     </div>
