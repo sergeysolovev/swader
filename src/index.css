@@ -89,22 +89,6 @@ a {
   text-decoration: none;
 }
 
-/* buttons */
-.btn {
-  border-radius: 5px;
-  color: black;
-  cursor: pointer;
-  display: inline-block;
-  font-weight: 400;
-  letter-spacing: .5px;
-  text-transform: uppercase;
-  margin: 0;
-}
-.btn-alt {
-  border: 1px solid black;
-  padding: 0 12px;
-}
-
 /* navigation */
 .nav {
   line-height: 44px;
@@ -208,19 +192,5 @@ tr.spaceUnder > td
 }
 
 /* main */
-.hero {
-  text-align: center;
-  line-height: 36px;
-  padding: 0 80px;
-}
-.hero h2 {
-  font-size: 36px;
-  font-weight: 400;
-  letter-spacing: .5px;
-}
-.hero p {
-  font-size: 24px;
-}
-
 /* header */
 /* footer */

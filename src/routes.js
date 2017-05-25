@@ -1,4 +1,4 @@
-export const FILMS = "/films";
+export const FILMS = "/";
 export const PEOPLE = "/people";
 export const PLANETS = "/planets";
 export const STARSHIPS = "/starships";

@@ -7,10 +7,7 @@ const Nav = () => (
     <div className='container'>
       <ul>
         <li>
-          <NavLink to='/' activeOnlyWhenExact>Home</NavLink>
-        </li>
-        <li>
-          <NavLink to='/films' activeOnlyWhenExact>Films</NavLink>
+          <NavLink to='/' activeOnlyWhenExact>Films</NavLink>
         </li>
         <li>
           <NavLink to='/people' activeOnlyWhenExact>People</NavLink>

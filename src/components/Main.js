@@ -10,13 +10,11 @@ import PeopleItem from '../components/PeopleItem'
 import StarshipItem from '../components/StarshipItem'
 import Person from '../containers/Person'
 import About from '../components/About'
-import Home from '../components/Home'
 import NoMatch from '../components/NoMatch'
 
 const Main = () => (
   <main>
-    <Match exactly pattern="/" component={Home} />
-    <Match pattern={Routes.FILMS} component={Films} />
+    <Match exactly pattern={Routes.FILMS} component={Films} />
     <Match pattern={`${Routes.PEOPLE}/:personId`} component={Person} />
     <Match exactly pattern={Routes.PEOPLE} render={(matchProps) =>
       <ResourceList {...matchProps}
