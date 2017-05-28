@@ -7,13 +7,13 @@ const Nav = () => (
     <div className='container'>
       <ul>
         <li>
-          <span>let {'{'}</span>
-          <NavLink to='/' activeOnlyWhenExact>episodes</NavLink>
+          <span>const {'{ '}</span>
+          <NavLink to='/films'>films</NavLink>
           <span>,</span>
         </li>
         <li>
           <span>&nbsp;</span>
-          <NavLink to='/people' activeOnlyWhenExact>chars</NavLink>
+          <NavLink to='/people'>chars</NavLink>
           <span>,</span>
         </li>
         <li>
@@ -24,11 +24,11 @@ const Nav = () => (
         <li>
           <span>&nbsp;</span>
           <NavLink to='/planets'>planets</NavLink>
-          <span>{'} ='}</span>
+          <span>{' } ='}</span>
         </li>
         <li>
           <span>&nbsp;getNav(</span>
-          <NavLink to='/about'>swader.js</NavLink>
+          <NavLink to='/' activeOnlyWhenExact>swader.js</NavLink>
           <span>);</span>
         </li>
       </ul>

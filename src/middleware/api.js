@@ -16,6 +16,12 @@ export const fetchFilms = () => {
     .catch(error => ({isError: true}));
 }
 
+export const fetchFilm = (filmId) => {
+  return api(`films/${filmId}/`)
+    .then(json => createFilm(json))
+    .catch(error => ({isError: true}));
+}
+
 const getYear = (film) => {
   return new Date(film.release_date).getFullYear();
 }
@@ -45,7 +51,7 @@ const toRoman = (decimal) => {
   return recur(decimal, chart);
 }
 
-export const loadFilmResources = (film) => {
+export const fetchFilmResources = (film) => {
   const promise = (resourceType, resourceUrls, mapResultsTo) =>
     resourceUrls ?
       Promise.all(resourceUrls
@@ -61,7 +67,7 @@ export const loadFilmResources = (film) => {
     promise('vehicles', film.vehicles, x => ({'vehicles': x}))
   ];
   return Promise.all(promises)
-    .then(results => Object.assign({}, film, ...results));
+    .then(results => Object.assign({}, ...results));
 }
 
 export const fetchResources = (resourceType, filter, page) => {

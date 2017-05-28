@@ -3,6 +3,7 @@ import React from 'react'
 import { Match, Miss } from 'react-router'
 import * as Routes from '../routes'
 
+import Film from '../containers/Film'
 import Films from '../containers/Films'
 import ResourceList from '../containers/ResourceList'
 import PlanetItem from '../components/PlanetItem'
@@ -14,7 +15,11 @@ import NoMatch from '../components/NoMatch'
 
 const Main = () => (
   <main>
+    <Match exactly pattern='/' component={About} />
+
     <Match exactly pattern={Routes.FILMS} component={Films} />
+    <Match pattern={`${Routes.FILMS}/:filmId`} component={Film} />
+
     <Match pattern={`${Routes.PEOPLE}/:personId`} component={Person} />
     <Match exactly pattern={Routes.PEOPLE} render={(matchProps) =>
       <ResourceList {...matchProps}
@@ -28,7 +33,6 @@ const Main = () => (
       <ResourceList {...matchProps}
         resourceType='starships'
         itemComponent={StarshipItem} />} />
-    <Match pattern={Routes.ABOUT} component={About} />
     <Miss component={NoMatch} />
   </main>
 )
