@@ -3,7 +3,7 @@ import { Link } from 'react-router'
 import Api, { fetchResources } from '../middleware/api'
 import { getResourcePath } from '../routes'
 import Url from 'url'
-import debounce from 'lodash/debounce'
+import debounce from 'lodash.debounce'
 import ResourceSimpleList from '../components/ResourceSimpleList'
 
 const FILTER_SHOW_ALL = ''
