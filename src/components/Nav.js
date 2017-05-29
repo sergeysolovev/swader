@@ -28,7 +28,7 @@ const Nav = () => (
         </li>
         <li>
           <span>&nbsp;getNav(</span>
-          <NavLink to='/' activeOnlyWhenExact>swader.js</NavLink>
+          <NavLink to='/' activeOnlyWhenExact>swader</NavLink>
           <span>);</span>
         </li>
       </ul>
