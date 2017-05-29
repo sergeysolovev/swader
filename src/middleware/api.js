@@ -10,24 +10,24 @@ const RESOURCE_TYPES = [
   'species'
 ];
 
-export const fetchFilms = () => {
+export function fetchFilms() {
   return api('films/')
     .then(json => ({ films: json.results.map(createFilm) }))
     .catch(error => ({isError: true}));
 }
 
-export const fetchFilm = (filmId) => {
+export function fetchFilm(filmId) {
   return api(`films/${filmId}/`)
     .then(json => createFilm(json))
     .catch(error => ({isError: true}));
 }
 
-const getYear = (film) => {
+function getYear(film) {
   return new Date(film.release_date).getFullYear();
 }
 
 // http://eddmann.com/posts/arabic-to-roman-numerals-converter-in-javascript/
-const toRoman = (decimal) => {
+function toRoman(decimal) {
   const chart = [
     [ 'M', 1000],
     ['CM',  900],
@@ -44,14 +44,14 @@ const toRoman = (decimal) => {
     [ 'I',    1]
   ];
   function recur(remainder, chart) {
-    if (remainder == 0) return '';
+    if (remainder === 0) return '';
     const [[numeral, value], ...tail] = chart;
     return numeral.repeat(remainder / value) + recur(remainder % value, tail);
   };
   return recur(decimal, chart);
 }
 
-export const fetchFilmResources = (film) => {
+export function fetchFilmResources(film) {
   const promise = (resourceType, resourceUrls, mapResultsTo) =>
     resourceUrls ?
       Promise.all(resourceUrls
@@ -70,7 +70,7 @@ export const fetchFilmResources = (film) => {
     .then(results => Object.assign({}, ...results));
 }
 
-export const fetchResources = (resourceType, filter, page) => {
+export function fetchResources(resourceType, filter, page) {
   validateResourceType(resourceType);
   let url = `${resourceType}/`
     + (filter ? `?search=${encodeURI(filter)}` : '')
@@ -87,7 +87,7 @@ export const fetchResources = (resourceType, filter, page) => {
     .catch(error => ({isError: true}));
 }
 
-export const fetchResource = (resourceType, resourceId) => {
+export function fetchResource(resourceType, resourceId) {
   validateResourceType(resourceType);
   let url = `${resourceType}/${resourceId}/`;
   return api(url)
@@ -95,19 +95,19 @@ export const fetchResource = (resourceType, resourceId) => {
     .catch(error => ({isError: true}));
 }
 
-export const getUrlId = (url) => {
+export function getUrlId(url) {
   let urlSplitted = url.split('/');
   return urlSplitted[urlSplitted.length - 2];
 }
 
-const shorten = (string) => {
+function shorten(string) {
   const maxLength = 200;
   let trimmed = string.substr(0, maxLength);
   return trimmed.substr(0,
     Math.min(trimmed.length, trimmed.lastIndexOf(' ')));
 }
 
-const createFilm = (filmItem) => {
+function createFilm(filmItem) {
   let film = extendWithId(filmItem);
   return Object.assign({}, film, {
     episode: toRoman(film.episode_id),
@@ -117,7 +117,7 @@ const createFilm = (filmItem) => {
   });
 }
 
-const api = endpoint => {
+function api (endpoint) {
   const fullUrl = (endpoint.indexOf(API_ROOT) === -1) ?
     API_ROOT + endpoint :
     endpoint;
@@ -125,24 +125,26 @@ const api = endpoint => {
     .then(response => response.json());
 }
 
-const validateResourceType = resourceType => {
+function validateResourceType(resourceType) {
   if (!(RESOURCE_TYPES.includes(resourceType))) {
     return Promise.reject({isError: true});
   }
 }
 
-const extendWithId = resource =>
-  Object.assign({}, resource, {id: getResourceId(resource)});
+function extendWithId(resource) {
+  return Object.assign({}, resource, {id: getResourceId(resource)});
+}
 
-const getResourceId = (resource) => {
+function getResourceId(resource) {
   let urlSplitted = resource.url.split('/');
   return urlSplitted[urlSplitted.length - 2];
 }
 
-const getPageNumberFromUrl = url =>
-  url ? parseInt(Url.parse(url, true).query.page) : undefined;
+function getPageNumberFromUrl(url) {
+  return url ? parseInt(Url.parse(url, true).query.page, 10) : undefined;
+}
 
-const getCurrentPageNumber = (nextPageUrl, prevPageUrl) => {
+function getCurrentPageNumber(nextPageUrl, prevPageUrl) {
   if (nextPageUrl) {
     return getPageNumberFromUrl(nextPageUrl) - 1;
   } else if (prevPageUrl) {
