@@ -1,8 +1,5 @@
 import React, { PropTypes, Component } from 'react'
-import { Link } from 'react-router'
-import Api, { fetchResources } from '../middleware/api'
-import { getResourcePath } from '../routes'
-import Url from 'url'
+import { fetchResources } from '../middleware/api'
 import debounce from 'lodash.debounce'
 import ResourceSimpleList from '../components/ResourceSimpleList'
 
@@ -60,9 +57,7 @@ export default class ResourceList extends Component {
     this.refreshData();
   }
   render() {
-    const {isLoading, isError, page,
-      prevPage, nextPage, isPageChanging,
-      items } = this.state;
+    const {isLoading, isError, page, prevPage, nextPage, items } = this.state;
     const location = this.props.location || {};
     location.state = Object.assign({}, location.state,
       {page: this.state.page});

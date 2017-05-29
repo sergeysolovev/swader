@@ -1,4 +1,4 @@
-import Api, { fetchFilm, fetchFilmResources } from '../middleware/api'
+import { fetchFilm, fetchFilmResources } from '../middleware/api'
 import React from 'react'
 import { LetObj, StringProp, LinkArrayProp } from '../components/Indent'
 

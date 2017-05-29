@@ -1,6 +1,6 @@
-import React, { Component, PropTypes } from 'react'
+import React, { PropTypes } from 'react'
 import { Link } from 'react-router'
-import Api, { fetchResource, getUrlId } from '../middleware/api'
+import { fetchResource, getUrlId } from '../middleware/api'
 import * as Routes from '../routes'
 import ResourceSimpleList from '../components/ResourceSimpleList'
 import StarshipItem from '../components/StarshipItem'
