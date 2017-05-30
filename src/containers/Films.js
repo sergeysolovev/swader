@@ -5,7 +5,7 @@ import { fetchFilms } from '../middleware/api'
 export default class Films extends React.Component {
   constructor() {
     super();
-    this.state = { films: "fetching..." }
+    this.state = { }
   }
   componentWillMount() {
     fetchFilms().then(({films}) => this.setState({films}));

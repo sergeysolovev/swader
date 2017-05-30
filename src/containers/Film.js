@@ -7,21 +7,8 @@ export default class Film extends React.Component {
   {
     super();
     this.state = {
-      film: {
-        episode: 'fetching...',
-        title: 'fetching...',
-        release_date: 'fetching...',
-        director: 'fetching...',
-        producer: 'fetching...',
-        opening: 'fetching...'
-      },
-      resources: {
-        characters: "fetching...",
-        starships: "fetching...",
-        planets: "fetching...",
-        species: "fetching...",
-        vehicles: "fetching...",
-      }
+      film: {},
+      resources: {}
     }
   }
   componentWillMount() {
