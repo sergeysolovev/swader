@@ -72,18 +72,21 @@ export function fetchFilmResources(film) {
 
 export function fetchResources(resourceType, filter, page) {
   validateResourceType(resourceType);
-  let url = `${resourceType}/`
-    + (filter ? `?search=${encodeURI(filter)}` : '')
-    + (page && !filter ? `?page=${page}` : '');
+  let url = `${resourceType}/` + (
+    filter && page ? `?search=${encodeURI(filter)}&page=${page}` :
+    filter ? `?search=${encodeURI(filter)}` :
+    page ? `?page=${page}` : ''
+  );
   return api(url)
     .then(json => ({
-       items: json.results.map(resource => extendWithId(resource)),
-       url: url,
-       nextPageUrl: json.next,
-       prevPageUrl: json.previous,
-       nextPage: getPageNumberFromUrl(json.next),
-       prevPage: getPageNumberFromUrl(json.previous),
-       page: getCurrentPageNumber(json.next, json.previous) }))
+      count: json.count,
+      items: json.results.map(resource => extendWithId(resource)),
+      url: url,
+      nextPageUrl: json.next,
+      prevPageUrl: json.previous,
+      nextPage: getPageNumberFromUrl(json.next),
+      prevPage: getPageNumberFromUrl(json.previous),
+      page: getCurrentPageNumber(json.next, json.previous) }))
     .catch(error => ({isError: true}));
 }
 

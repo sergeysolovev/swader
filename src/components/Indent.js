@@ -1,5 +1,6 @@
 import React from 'react'
 import { Link } from 'react-router'
+import InfiniteScroll from 'react-infinite-scroller'
 
 // BASIC COMPONENTS:
 const Indent = ({children}) => (
@@ -28,7 +29,7 @@ const Separator = ({items, index, sep = ", "}) => (
 const LetArray = ({name, children}) => (
   <div>
     <span>let {name} = [</span>
-    <table>{children}</table>
+    {children ? <table>{children}</table> : ""}
     <span>];</span>
   </div>
 );
@@ -45,11 +46,7 @@ const LetLinkArray = ({name, items, display, link}) => {
       </LetArray>
     );
   } else {
-    return (
-      <LetArray name={name}>
-        <QuotedItem>{items}</QuotedItem>
-      </LetArray>
-    );
+    return (<LetArray name={name} />);
   }
 };
 
@@ -57,22 +54,21 @@ const QuotedItem = ({children}) => (
   <tbody>
     <tr>
       <td><Indent/></td>
-      <td>"{children}",</td>
+      <td className="expand">"{children}",</td>
     </tr>
   </tbody>
 );
 
 // OBJECTS:
+
 const LetObj = ({name, children}) => (
-  <table>
-    <tbody>
-      <tr><td colSpan={4}>let {name} = {'{'}</td></tr>
-    </tbody>
-    {children}
-    <tbody>
-      <tr><td colSpan={4}>{'};'}</td></tr>
-    </tbody>
-  </table>
+  <div>
+    <span>let {name} = {'{'}</span>
+    <table>
+      {children}
+    </table>
+    <span>{'};'}</span>
+  </div>
 );
 
 const StringProp = ({name, value}) => (
@@ -86,10 +82,53 @@ const QuotedProp = ({name, children}) => (
     <tr>
       <td><Indent /></td>
       <td>{name}:</td>
+      <td><HalfIndent />"</td>
+      <td className="expand">{children}{'",'}</td>
+    </tr>
+  </tbody>
+);
+
+const AutofetchLinkArrayProp = ({name, items, display, link, fetchMore, hasMore}) => (
+  <tbody>
+    <tr>
+      <td><Indent/></td>
+      <td>{name}:</td>
       <td>
-        <HalfIndent>"</HalfIndent>
+        <HalfIndent />[
       </td>
-      <td>{children}{'",'}</td>
+      <td>
+        <InfiniteScroll
+          element='table'
+          loadMore={fetchMore}
+          hasMore={hasMore}
+          threshold={0}>
+            <tbody>
+              {items.length > 0 ?
+                items.map((item, index) =>
+                  <tr key={index}>
+                    <td>
+                      <Link to={link(item)}>{display(item)}</Link>
+                      {(index === items.length - 1) ? "]," : ","}
+                    </td>
+                  </tr>
+                ) : <tr><td>],</td></tr>
+              }
+            </tbody>
+        </InfiniteScroll>
+      </td>
+    </tr>
+  </tbody>
+);
+
+const Prop = ({name, children}) => (
+  <tbody>
+    <tr>
+      <td><Indent /></td>
+      <td className="nowrap">{name}:</td>
+      <td>
+        <HalfIndent />
+      </td>
+      <td className="expand">{children}{','}</td>
     </tr>
   </tbody>
 );
@@ -142,9 +181,7 @@ const LinkArrayProp = ({name, items, display, link}) => {
         <tr>
           <td><Indent/></td>
           <td>{name}:</td>
-          <td>
-            <HalfIndent>[</HalfIndent>
-          </td>
+          <td><HalfIndent />[</td>
           <td>
             {items
               .map((item, index) =>
@@ -165,9 +202,7 @@ const LinkArrayProp = ({name, items, display, link}) => {
         <tr>
           <td><Indent/></td>
           <td>{name}:</td>
-          <td>
-            <HalfIndent>[</HalfIndent>
-          </td>
+          <td><HalfIndent />[</td>
           <td>{items}{'],'}</td>
         </tr>
       </tbody>
@@ -180,10 +215,12 @@ module.exports = {
   Ref,
   LetObj,
   ObjProp,
+  Prop,
   QuotedProp,
   StringProp,
   LinkArrayProp,
   LetArray,
   QuotedItem,
   LetLinkArray,
+  AutofetchLinkArrayProp,
 }
