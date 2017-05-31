@@ -1,20 +1,18 @@
 # swader todo
 
-## tasks
-- responsive markup for mobile devices
-- use redux (need experience)
-- add tests;
+## product tasks
+- detail views for every resource (4h)
+- need clear statuses of fetched objects: (fetch animation | n/a | value)
+- search page (1d)
+- responsive markup for mobile devices (1-2d)
+- fetching animation [. -> .. -> ... -> .] (2-3h)
+- add redux in about/dependencies;
 - DONE: update resource list page (search/navigate)
 
-## other tasks
-- update packages versions (new router, new react)
-- make film resources clickable
-- add dependencies (router is a must, redux and indent would be good);
+## tech tasks
+- use redux (2-3d)
+- add tests (1-2d)
+- update packages versions (2-3h)
+- update readme.md
 - DONE: deploy
-
-## fixes
 - DONE: remove warnings produced by api.js
-
-## maybe
-- make ident as a separate js lib
-- fetching animation (it's a cool mix beetween text-only and react)
