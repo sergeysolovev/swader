@@ -1,6 +1,6 @@
-import { fetchFilm, fetchFilmResources } from '../middleware/api'
 import React from 'react'
-import { LetObj, StringProp, LinkArrayProp } from '../components/Indent'
+import { fetchFilm, fetchFilmResources } from '../middleware/api'
+import { LetObj, StringProp, RelatedResourcesProp } from '../components/Indent'
 
 export default class Film extends React.Component {
   constructor()
@@ -11,7 +11,7 @@ export default class Film extends React.Component {
       resources: {}
     }
   }
-  componentWillMount() {
+  componentDidMount() {
     const {params} = this.props;
     fetchFilm(params.filmId)
       .then(film => {
@@ -38,11 +38,11 @@ export default class Film extends React.Component {
           <StringProp name="directed_by" value={film.director} />
           <StringProp name="produced_by" value={film.producer} />
           <StringProp name="opening" value={film.opening} />
-          <LinkArrayProp name="characters" items={characters} display={x => x.name} link={x => '#'} />
-          <LinkArrayProp name="starships" items={starships} display={x => x.name} link={x => '#'} />
-          <LinkArrayProp name="planets" items={planets} display={x => x.name} link={x => '#'} />
-          <LinkArrayProp name="species" items={species} display={x => x.name} link={x => '#'} />
-          <LinkArrayProp name="vehicles" items={vehicles} display={x => x.name} link={x => '#'} />
+          <RelatedResourcesProp name='characters' items={characters} />
+          <RelatedResourcesProp name='starships' items={starships} />
+          <RelatedResourcesProp name='planets' items={planets} />
+          <RelatedResourcesProp name='species' items={species} />
+          <RelatedResourcesProp name='vehicles' items={vehicles} />
         </LetObj>
       </div>
     );

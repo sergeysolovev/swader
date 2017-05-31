@@ -51,6 +51,57 @@ function toRoman(decimal) {
   return recur(decimal, chart);
 }
 
+const propToResourceType = {
+  'residents': 'people',
+  'pilots': 'people',
+  'characters': 'people',
+  'homeworld': 'planets'
+}
+
+export function getResourceTypeByProp(propName) {
+  return propToResourceType[propName] || propName;
+}
+
+export function getResourceDisplayName(resourceType, item) {
+  return {
+    'films': `${item.title} (${getYear(item)})`,
+    'people': item.name,
+    'planets': item.name,
+    'starships': item.name,
+    'vehicles': item.name,
+    'species': item.name
+  }[resourceType];
+}
+
+export function isRelatedResource(resource) {
+  const includesApiRoot = (res) => res.includes(API_ROOT);
+  return Array.isArray(resource) ?
+    resource.every(includesApiRoot) :
+    includesApiRoot(resource)
+}
+
+export function fetchRelatedResources(item) {
+  const promise = (resourceType, resourceUrls, mapResultsTo) =>
+    resourceUrls ?
+      Promise.all(resourceUrls
+        .map(url => getUrlId(url))
+        .map(id => fetchResource(resourceType, id)))
+      .then(resources => Promise.resolve(mapResultsTo(resources))) :
+      Promise.resolve(mapResultsTo([]));
+  const promises = Object
+    .keys(item)
+    .filter(key => isRelatedResource(item[key]))
+    .map(key =>
+      promise(
+        getResourceTypeByProp(key),
+        Array.isArray(item[key]) ? item[key] : [item[key]],
+        x => ({[key]: x})
+      )
+    );
+  return Promise.all(promises)
+    .then(results => Object.assign({}, ...results));
+}
+
 export function fetchFilmResources(film) {
   const promise = (resourceType, resourceUrls, mapResultsTo) =>
     resourceUrls ?
