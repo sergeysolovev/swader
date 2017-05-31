@@ -24,6 +24,16 @@ const Nav = () => (
         <li>
           <span>&nbsp;</span>
           <NavLink to='/planets'>planets</NavLink>
+          <span>,</span>
+        </li>
+        <li>
+          <span>&nbsp;</span>
+          <NavLink to='/vehicles'>vehicles</NavLink>
+          <span>,</span>
+        </li>
+        <li>
+          <span>&nbsp;</span>
+          <NavLink to='/species'>species</NavLink>
           <span>{' } ='}</span>
         </li>
         <li>

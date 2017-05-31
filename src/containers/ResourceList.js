@@ -4,7 +4,7 @@ import {
   LetObj,
   StringProp,
   QuotedProp,
-  AutofetchLinkArrayProp
+  AutofetchRelatedResourcesProp
 } from '../components/Indent'
 
 export default class ResourceList extends Component {
@@ -70,11 +70,10 @@ export default class ResourceList extends Component {
             />
           </QuotedProp>
           <StringProp name='count' value={count} />
-          <AutofetchLinkArrayProp
+          <AutofetchRelatedResourcesProp
             name='results'
+            prop={resourceType}
             items={items}
-            display={x => x.name}
-            link={x => '#'}
             fetchMore={this.fetchMore}
             hasMore={hasMore}
           />

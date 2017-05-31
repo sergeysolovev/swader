@@ -1,6 +1,8 @@
 import React from 'react'
 import { Link } from 'react-router'
 import InfiniteScroll from 'react-infinite-scroller'
+import { getResourceDisplayName, getResourceTypeByProp } from '../middleware/api'
+import { getResourcePath } from '../routes'
 
 // BASIC COMPONENTS:
 const Indent = ({children}) => (
@@ -210,6 +212,26 @@ const LinkArrayProp = ({name, items, display, link}) => {
   }
 }
 
+const RelatedResourcesProp = ({name, prop = name, items}) => (
+  <LinkArrayProp
+    name={name}
+    items={items}
+    display={x => getResourceDisplayName(getResourceTypeByProp(prop), x)}
+    link={x => getResourcePath(getResourceTypeByProp(prop), x.id)}
+  />
+)
+
+const AutofetchRelatedResourcesProp = ({name, prop = name, items, fetchMore, hasMore}) => (
+  <AutofetchLinkArrayProp
+    name={name}
+    items={items}
+    display={x => getResourceDisplayName(getResourceTypeByProp(prop), x)}
+    link={x => getResourcePath(getResourceTypeByProp(prop), x.id)}
+    fetchMore={fetchMore}
+    hasMore={hasMore}
+  />
+)
+
 module.exports = {
   Indent,
   Ref,
@@ -223,4 +245,6 @@ module.exports = {
   QuotedItem,
   LetLinkArray,
   AutofetchLinkArrayProp,
+  RelatedResourcesProp,
+  AutofetchRelatedResourcesProp
 }
