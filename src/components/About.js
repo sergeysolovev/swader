@@ -1,5 +1,5 @@
 import React from 'react'
-import { Link } from 'react-router'
+import { Link } from 'react-router-dom'
 import { LetObj, StringProp, QuotedProp, ObjProp } from '../components/Indent'
 
 const About = () => (
