@@ -1,4 +1,4 @@
-import React, { PropTypes, Component } from 'react'
+import React, { Component } from 'react'
 import { fetchResources } from '../middleware/api'
 import {
   LetObj,
@@ -8,10 +8,6 @@ import {
 } from '../components/Indent'
 
 export default class ResourceList extends Component {
-  static propTypes = {
-    resourceType: PropTypes.string.isRequired,
-    page: PropTypes.number
-  }
   constructor(props) {
     super(props);
     this.onFilterChange = this.onFilterChange.bind(this);

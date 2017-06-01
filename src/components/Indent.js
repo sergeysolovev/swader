@@ -235,7 +235,7 @@ const AutofetchRelatedResourcesProp = ({name, prop = name, items, fetchMore, has
   />
 )
 
-module.exports = {
+export {
   Indent,
   Ref,
   LetObj,
