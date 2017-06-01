@@ -14,7 +14,13 @@ export default class ResourceList extends Component {
   }
   constructor(props) {
     super(props);
-    this.state = {
+    this.onFilterChange = this.onFilterChange.bind(this);
+    this.fetchMore = this.fetchMore.bind(this);
+    this.getInitialState = this.getInitialState.bind(this);
+    this.state = this.getInitialState();
+  }
+  getInitialState() {
+    return {
       filter: '',
       results: {
         '': {
@@ -25,8 +31,6 @@ export default class ResourceList extends Component {
         }
       }
     };
-    this.onFilterChange = this.onFilterChange.bind(this);
-    this.fetchMore = this.fetchMore.bind(this);
   }
   onFilterChange(event) {
     let { results } = this.state;
@@ -40,7 +44,7 @@ export default class ResourceList extends Component {
   }
   fetchMore() {
     let { results } = this.state;
-    const { resourceType } = this.props;
+    const { resourceType } = this.props.match.params;
     const { filter } = this.state;
     const { nextPage, items } = results[filter];
     fetchResources(resourceType, filter, nextPage)
@@ -54,8 +58,13 @@ export default class ResourceList extends Component {
         this.setState(results);
       });
   }
+  componentWillReceiveProps(nextProps) {
+    if (this.props.match.params !== nextProps.match.params) {
+      this.setState(this.getInitialState());
+    }
+  }
   render() {
-    const { resourceType } = this.props;
+    const { resourceType } = this.props.match.params
     const { filter, results } = this.state;
     const { items, count, hasMore } = results[filter];
     return (

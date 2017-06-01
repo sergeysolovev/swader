@@ -1,8 +1,11 @@
 import React from 'react'
-import { Link } from 'react-router'
+import { Link } from 'react-router-dom'
 import InfiniteScroll from 'react-infinite-scroller'
 import { getResourceDisplayName, getResourceTypeByProp } from '../middleware/api'
-import { getResourcePath } from '../routes'
+
+function getResourcePath(resourceType, resourceId) {
+  return `/${resourceType}/${resourceId}`;
+}
 
 // BASIC COMPONENTS:
 const Indent = ({children}) => (

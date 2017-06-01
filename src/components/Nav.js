@@ -1,6 +1,5 @@
 import React from 'react'
-import { Link } from 'react-router'
-import classNames from 'classnames'
+import { NavLink } from 'react-router-dom'
 
 const Nav = () => (
   <nav className='nav'>
@@ -8,51 +7,56 @@ const Nav = () => (
       <ul>
         <li>
           <span>const {'{ '}</span>
-          <NavLink to='/films'>films</NavLink>
+          <NavLink to='/films' activeClassName='nav-link-active'>
+            films
+          </NavLink>
           <span>,</span>
         </li>
         <li>
           <span>&nbsp;</span>
-          <NavLink to='/people'>chars</NavLink>
+          <NavLink to='/people' activeClassName='nav-link-active'>
+            chars
+          </NavLink>
           <span>,</span>
         </li>
         <li>
           <span>&nbsp;</span>
-          <NavLink to='/starships'>ships</NavLink>
+          <NavLink to='/starships' activeClassName='nav-link-active'>
+            ships
+          </NavLink>
           <span>,</span>
         </li>
         <li>
           <span>&nbsp;</span>
-          <NavLink to='/planets'>planets</NavLink>
+          <NavLink to='/planets' activeClassName='nav-link-active'>
+            planets
+          </NavLink>
           <span>,</span>
         </li>
         <li>
           <span>&nbsp;</span>
-          <NavLink to='/vehicles'>vehicles</NavLink>
+          <NavLink to='/vehicles' activeClassName='nav-link-active'>
+            vehicles
+          </NavLink>
           <span>,</span>
         </li>
         <li>
           <span>&nbsp;</span>
-          <NavLink to='/species'>species</NavLink>
+          <NavLink to='/species' activeClassName='nav-link-active'>
+            species
+          </NavLink>
           <span>{' } ='}</span>
         </li>
         <li>
           <span>&nbsp;getNav(</span>
-          <NavLink to='/' activeOnlyWhenExact>swader</NavLink>
+          <NavLink exact to='/' activeClassName='nav-link-active'>
+            swader
+          </NavLink>
           <span>);</span>
         </li>
       </ul>
     </div>
   </nav>
-)
-
-const NavLink = ({to, text, activeOnlyWhenExact, children}) => (
-  <Link to={to} activeOnlyWhenExact={activeOnlyWhenExact}>{
-    ({isActive, href, onClick}) =>
-      <span className={classNames({'nav-link': true, 'nav-link-active': isActive})}>
-        <a href={href} onClick={onClick}>{children}</a>
-      </span>
-  }</Link>
 )
 
 export default Nav

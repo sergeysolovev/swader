@@ -5,15 +5,15 @@ import { LetObj, StringProp, RelatedResourcesProp } from '../components/Indent'
 class Resource extends React.Component {
   constructor() {
     super();
+    this.fetch = this.fetch.bind(this);
     this.state = {
       item: {},
       resources: {}
     }
   }
-  componentDidMount() {
-    const { resourceType, params } = this.props;
+  fetch({resourceType, id}) {
     const excludedProps = ['id', 'created', 'edited', 'url' ];
-    fetchResource(resourceType, params.id)
+    fetchResource(resourceType, id)
       .then(item => {
         excludedProps.forEach(exProp => delete item[exProp]);
         this.setState({item});
@@ -23,8 +23,17 @@ class Resource extends React.Component {
           });
       });
   }
+  componentWillReceiveProps(nextProps) {
+    if (this.props.match.params !== nextProps.match.params) {
+      this.setState({item: {}, resources: {}});
+      this.fetch(nextProps.match.params);
+    }
+  }
+  componentDidMount() {
+    this.fetch(this.props.match.params);
+  }
   render() {
-    const { resourceType } = this.props;
+    const { resourceType } = this.props.match.params;
     const { item, resources } = this.state;
     return (
       <div className='container'>

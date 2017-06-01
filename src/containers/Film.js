@@ -12,8 +12,8 @@ export default class Film extends React.Component {
     }
   }
   componentDidMount() {
-    const {params} = this.props;
-    fetchFilm(params.filmId)
+    const {params} = this.props.match;
+    fetchFilm(params.id)
       .then(film => {
         this.setState({film});
         fetchFilmResources(film).then(resources => {
