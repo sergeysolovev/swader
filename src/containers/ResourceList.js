@@ -68,6 +68,8 @@ export default class ResourceList extends Component {
       this.setState(this.getInitialState());
     }
   }
+  componentWillUnmount() {
+  }
   render() {
     const { match } = this.props;
     const { resourceType } = match.params;

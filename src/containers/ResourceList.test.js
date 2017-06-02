@@ -5,6 +5,7 @@ import InfiniteScroll from 'react-infinite-scroller'
 import { MemoryRouter, Link } from 'react-router-dom'
 import { matchPath } from 'react-router'
 import { mount } from 'enzyme'
+import sinon from 'sinon'
 
 function flushPromises() {
   return new Promise(resolve => setImmediate(resolve));
@@ -134,6 +135,36 @@ describe('ResourceList', () => {
         <a href="/people/1">Luke Skywalker</a>)).toBe(true);
       expect(wrapper.containsMatchingElement(
         <a href="/people/4">Darth Vader</a>)).toBe(true);
+    });
+  });
+
+  it('console.error that setState can only update mounted/ing component', () => {
+    global.console.error = jest.fn();
+    global.fetch = jest.fn().mockImplementation(() =>
+      Promise.resolve({
+        json: () => ({ results: [] })
+      }));
+    const match = { params: { resourceType: 'people' } };
+    sinon.stub(ResourceList.prototype, 'componentWillUnmount');
+    mount(<ResourceList match={match} />).unmount();
+    return flushPromises().then(() => {
+      expect(console.error.mock.calls.length).toBe(1);
+      expect(console.error.mock.calls[0][0]).toMatch(
+        'Warning: setState(...): Can only update a mounted or mounting component.'
+      );
+    });
+  });
+
+  it('mounting and unmounting not causing errors', () => {
+    global.console.error = jest.fn();
+    global.fetch = jest.fn().mockImplementation(() =>
+      Promise.resolve({
+        json: () => ({ results: [] })
+      }));
+    const match = { params: { resourceType: 'people' } };
+    mount(<ResourceList match={match} />).unmount();
+    return flushPromises().then(() => {
+      expect(console.error.mock.calls.length).toBe(0);
     });
   });
 });
