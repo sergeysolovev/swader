@@ -10,7 +10,11 @@ import {
 
 export default class ResourceList extends Component {
   static propTypes = {
-    match: PropTypes.object.isRequired
+    match: PropTypes.shape({
+      params: PropTypes.shape({
+        resourceType: PropTypes.string.isRequired
+      }).isRequired
+    }).isRequired
   }
   constructor(props) {
     super(props);

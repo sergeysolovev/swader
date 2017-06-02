@@ -22,7 +22,7 @@ describe('ResourceList', () => {
   const pathOf = (res) => `/${res}`
 
   it('renders without crashing', () => {
-    const match = { params: {} }
+    const match = { params: { resourceType: '' } };
     const wrapper = mount(<ResourceList match={match} />);
   })
 
