@@ -1,77 +1,114 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import ResourceList from './ResourceList';
+import InfiniteScroll from 'react-infinite-scroller'
+import { MemoryRouter, Link } from 'react-router-dom'
 import { matchPath } from 'react-router'
-import { MemoryRouter } from 'react-router-dom'
+import { mount } from 'enzyme'
+
+function flushPromises() {
+  return new Promise(resolve => setImmediate(resolve));
+}
 
 describe('ResourceList', () => {
-  const resourcePaths = [
-    '/people',
-    '/planets',
-    '/starships',
-    '/species',
-    '/vehicles'
+  const resources = [
+    'people',
+    'planets',
+    'starships',
+    'species',
+    'vehicles'
   ];
 
-  it('renders empty list without crashing', () => {
-    global.fetch = jest.fn().mockImplementation(() =>
-      Promise.resolve({
-        json: () => ({ results: [] })
-      }));
-    resourcePaths.forEach(path => {
-      const match = matchPath(path, {
+  const pathOf = (res) => `/${res}`
+
+  it('renders without crashing', () => {
+    const match = { params: {} }
+    const wrapper = mount(<ResourceList match={match} />);
+  })
+
+  resources.forEach(res =>
+    it(`console.error for rejected fetch on ${pathOf(res)}`, () => {
+      global.fetch = jest.fn().mockImplementation(() => Promise.reject({}));
+      global.console.error = jest.fn();
+      const match = matchPath(pathOf(res), {
         path: '/:resourceType',
         exact: true,
         strict: false
       });
-      const div = document.createElement('div');
-      ReactDOM.render(
-        <MemoryRouter>
-          <ResourceList match={match} />
-        </MemoryRouter>,
-        div);
+      const wrapper = mount(<ResourceList match={match} />);
+      return flushPromises().then(() => {
+        expect(console.error.mock.calls.length).toBe(1);
+        expect(console.error.mock.calls[0][0]).toBe(
+          `Failed to load '${res}' from http://swapi.co`)
+      });
+    })
+  );
+
+  it(`console.error for resource type other than: ${resources}`, () => {
+    global.fetch = jest.fn().mockImplementation(() =>
+      Promise.resolve({
+        json: () => ({ results: [] })
+      }));
+    global.console.error = jest.fn();
+    const invalidResource = 'aliens';
+    const match = matchPath(pathOf(invalidResource), {
+      path: '/:resourceType',
+      exact: true,
+      strict: false
+    });
+    const wrapper = mount(<ResourceList match={match} />);
+    return flushPromises().then(() => {
+      expect(console.error.mock.calls.length).toBe(1);
+      expect(console.error.mock.calls[0][0]).toBe(
+        "Invalid resource type 'aliens'")
     });
   });
 
-  it('renders non-empty people list without crashing', () => {
+  resources.forEach(res =>
+    it(`renders empty list of '${res}'`, () => {
+      const results = [];
+      global.fetch = jest.fn().mockImplementation(() =>
+        Promise.resolve({
+          json: () => ({
+            results,
+            count: results.length
+          })
+        }));
+      global.console.error = jest.fn();
+      const match = matchPath(pathOf(res), {
+        path: '/:resourceType',
+        exact: true,
+        strict: false
+      });
+      const wrapper = mount(<ResourceList match={match} />)
+      return flushPromises().then(() => {
+        expect(wrapper.find('table').length).toBe(2);
+        expect(wrapper.text()).toMatch(`let ${res} = {`);
+        expect(wrapper.text()).toMatch('results: []');
+        expect(wrapper.text()).toMatch('count: "0"');
+        expect(wrapper.text()).toMatch('};');
+        expect(wrapper.find(Link).exists()).toBe(false);
+        expect(wrapper.find(InfiniteScroll).exists()).toBe(true);
+      })
+    })
+  );
+
+  it('renders a list of characters with links', () => {
+    const lukeSkywalker = {
+      name: "Luke Skywalker",
+      url: "http://swapi.co/api/people/1/"
+    };
+    const dartVader = {
+      name: "Darth Vader",
+      url: "http://swapi.co/api/people/4/"
+    };
+    const people = [lukeSkywalker, dartVader];
     global.fetch = jest.fn().mockImplementation(() =>
       Promise.resolve({
         json: () => ({
-          count: 1,
-          results: [
-            {
-              "name": "Luke Skywalker",
-              "height": "172",
-              "mass": "77",
-              "hair_color": "blond",
-              "skin_color": "fair",
-              "eye_color": "blue",
-              "birth_year": "19BBY",
-              "gender": "male",
-              "homeworld": "http://swapi.co/api/planets/1/",
-              "films": [
-                  "http://swapi.co/api/films/2/",
-                  "http://swapi.co/api/films/6/",
-                  "http://swapi.co/api/films/3/",
-                  "http://swapi.co/api/films/1/",
-                  "http://swapi.co/api/films/7/"
-              ],
-              "species": [
-                  "http://swapi.co/api/species/1/"
-              ],
-              "vehicles": [
-                  "http://swapi.co/api/vehicles/14/",
-                  "http://swapi.co/api/vehicles/30/"
-              ],
-              "starships": [
-                  "http://swapi.co/api/starships/12/",
-                  "http://swapi.co/api/starships/22/"
-              ],
-              "created": "2014-12-09T13:50:51.644000Z",
-              "edited": "2014-12-20T21:17:56.891000Z",
-              "url": "http://swapi.co/api/people/1/"
-            }
-          ]
+          count: people.length,
+          nextPage: undefined,
+          results: people
         })
       })
     );
@@ -80,12 +117,24 @@ describe('ResourceList', () => {
       exact: true,
       strict: false
     });
-    const div = document.createElement('div');
-    ReactDOM.render(
+    const wrapper = mount(
       <MemoryRouter>
         <ResourceList match={match} />
-      </MemoryRouter>,
-      div);
+      </MemoryRouter>
+    );
+    return flushPromises().then(() => {
+      expect(wrapper.find('div.container').length).toBe(1);
+      expect(wrapper.find('table').length).toBe(2);
+      expect(wrapper.text()).toMatch('let people = {');
+      expect(wrapper.text()).toMatch('};');
+      expect(wrapper.find(Link).at(0).props().to).toBe('/people/1');
+      expect(wrapper.find(Link).at(1).props().to).toBe('/people/4');
+      expect(wrapper.find(InfiniteScroll).exists()).toBe(true);
+      expect(wrapper.containsMatchingElement(
+        <a href="/people/1">Luke Skywalker</a>)).toBe(true);
+      expect(wrapper.containsMatchingElement(
+        <a href="/people/4">Darth Vader</a>)).toBe(true);
+    });
   });
 });
 

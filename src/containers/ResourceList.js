@@ -1,4 +1,5 @@
 import React, { Component } from 'react'
+import PropTypes from 'prop-types'
 import { fetchResources } from '../middleware/api'
 import {
   LetObj,
@@ -8,6 +9,9 @@ import {
 } from '../components/Indent'
 
 export default class ResourceList extends Component {
+  static propTypes = {
+    match: PropTypes.object.isRequired
+  }
   constructor(props) {
     super(props);
     this.onFilterChange = this.onFilterChange.bind(this);
@@ -52,7 +56,8 @@ export default class ResourceList extends Component {
           hasMore: Boolean(fetched.nextPage)
         };
         this.setState(results);
-      });
+      })
+      .catch(error => console.error(error));
   }
   componentWillReceiveProps(nextProps) {
     if (this.props.match.params !== nextProps.match.params) {
@@ -60,30 +65,33 @@ export default class ResourceList extends Component {
     }
   }
   render() {
-    const { resourceType } = this.props.match.params
+    const { match } = this.props;
+    const { resourceType } = match.params;
     const { filter, results } = this.state;
     const { items, count, hasMore } = results[filter];
     return (
-      <div className='container'>
-        <LetObj name={resourceType}>
-          <QuotedProp name='query'>
-            <input
-              className='searchBox'
-              value={filter}
-              size={filter.length || 1}
-              onChange={this.onFilterChange}
+      resourceType ?
+        <div className='container'>
+          <LetObj name={resourceType}>
+            <QuotedProp name='query'>
+              <input
+                className='searchBox'
+                value={filter}
+                size={filter.length || 1}
+                onChange={this.onFilterChange}
+              />
+            </QuotedProp>
+            <StringProp name='count' value={count} />
+            <AutofetchRelatedResourcesProp
+              name='results'
+              prop={resourceType}
+              items={items}
+              fetchMore={this.fetchMore}
+              hasMore={hasMore}
             />
-          </QuotedProp>
-          <StringProp name='count' value={count} />
-          <AutofetchRelatedResourcesProp
-            name='results'
-            prop={resourceType}
-            items={items}
-            fetchMore={this.fetchMore}
-            hasMore={hasMore}
-          />
-        </LetObj>
-      </div>
+          </LetObj>
+        </div> :
+        <div />
     );
   }
 }

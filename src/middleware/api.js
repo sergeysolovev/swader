@@ -122,23 +122,25 @@ export function fetchFilmResources(film) {
 }
 
 export function fetchResources(resourceType, filter, page) {
-  validateResourceType(resourceType);
-  let url = `${resourceType}/` + (
+  const url = `${resourceType}/` + (
     filter && page ? `?search=${encodeURI(filter)}&page=${page}` :
     filter ? `?search=${encodeURI(filter)}` :
     page ? `?page=${page}` : ''
   );
-  return api(url)
-    .then(json => ({
-      count: json.count,
-      items: json.results.map(resource => extendWithId(resource)),
-      url: url,
-      nextPageUrl: json.next,
-      prevPageUrl: json.previous,
-      nextPage: getPageNumberFromUrl(json.next),
-      prevPage: getPageNumberFromUrl(json.previous),
-      page: getCurrentPageNumber(json.next, json.previous) }))
-    .catch(error => ({isError: true}));
+  return validateResourceType(resourceType) ||
+    api(url)
+      .then(json => ({
+        count: json.count,
+        items: json.results.map(resource => extendWithId(resource)),
+        url: url,
+        nextPageUrl: json.next,
+        prevPageUrl: json.previous,
+        nextPage: getPageNumberFromUrl(json.next),
+        prevPage: getPageNumberFromUrl(json.previous),
+        page: getCurrentPageNumber(json.next, json.previous) }))
+      .catch(error => Promise.reject(
+        `Failed to load '${resourceType}' from http://swapi.co`)
+      );
 }
 
 export function fetchResource(resourceType, resourceId) {
@@ -180,9 +182,9 @@ function api (endpoint) {
 }
 
 function validateResourceType(resourceType) {
-  if (!(RESOURCE_TYPES.includes(resourceType))) {
-    return Promise.reject({isError: true});
-  }
+  return RESOURCE_TYPES.includes(resourceType) ?
+    false :
+    Promise.reject(`Invalid resource type '${resourceType}'`)
 }
 
 function extendWithId(resource) {
