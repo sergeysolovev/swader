@@ -1,8 +1,12 @@
 import React from 'react'
 import { fetchFilm, fetchFilmResources } from '../middleware/api'
 import { LetObj, StringProp, RelatedResourcesProp } from '../components/Indent'
+import PropTypes from 'prop-types'
 
 export default class Film extends React.Component {
+  static propTypes = {
+    match: PropTypes.object.isRequired
+  }
   constructor()
   {
     super();
