@@ -21,6 +21,8 @@ const About = () => (
         <QuotedProp name="chars"><Link to='/people'>/people</Link></QuotedProp>
         <QuotedProp name="ships"><Link to='/starships'>/starships</Link></QuotedProp>
         <QuotedProp name="planets"><Link to='/planets'>/planets</Link></QuotedProp>
+        <QuotedProp name="vehicles"><Link to='/vehicles'>/vehicles</Link></QuotedProp>
+        <QuotedProp name="species"><Link to='/species'>/planets</Link></QuotedProp>
       </ObjProp>
     </LetObj>
   </div>
