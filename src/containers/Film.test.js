@@ -5,7 +5,7 @@ import { mount } from 'enzyme'
 
 describe('Film', () => {
   it('renders without crashing', () => {
-    const match = { params: {} };
+    const match = { params: { id: '' } };
     mount(<Film match={match} />);
   });
 });
