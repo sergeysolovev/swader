@@ -7,7 +7,7 @@ export default class Films extends React.Component {
     super();
     this.state = { }
   }
-  componentWillMount() {
+  componentDidMount() {
     fetchFilms().then(({films}) => this.setState({films}));
   }
   render() {
