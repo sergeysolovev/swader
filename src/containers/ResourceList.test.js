@@ -11,6 +11,8 @@ function flushPromises() {
   return new Promise(resolve => setImmediate(resolve));
 }
 
+const sandbox = sinon.sandbox.create();
+
 describe('ResourceList', () => {
   const resources = [
     'people',
@@ -21,6 +23,8 @@ describe('ResourceList', () => {
   ];
 
   const pathOf = (res) => `/${res}`
+
+  afterEach(() => sandbox.restore());
 
   it('renders without crashing', () => {
     const match = { params: { resourceType: '' } };
@@ -145,7 +149,7 @@ describe('ResourceList', () => {
         json: () => ({ results: [] })
       }));
     const match = { params: { resourceType: 'people' } };
-    sinon.stub(ResourceList.prototype, 'componentWillUnmount');
+    sandbox.stub(ResourceList.prototype, 'componentWillUnmount');
     mount(<ResourceList match={match} />).unmount();
     return flushPromises().then(() => {
       expect(console.error.mock.calls.length).toBe(1);
