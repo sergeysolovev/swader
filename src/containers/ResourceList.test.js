@@ -6,10 +6,7 @@ import { MemoryRouter, Link } from 'react-router-dom'
 import { matchPath } from 'react-router'
 import { mount } from 'enzyme'
 import sinon from 'sinon'
-
-function flushPromises() {
-  return new Promise(resolve => setImmediate(resolve));
-}
+import flushPromises from '../utils/flushPromises'
 
 const sandbox = sinon.sandbox.create();
 
