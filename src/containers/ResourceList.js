@@ -1,6 +1,7 @@
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 import { fetchResources } from '../middleware/api'
+import makeCancelable from '../utils/makeCancelable'
 import {
   LetObj,
   StringProp,
@@ -51,8 +52,9 @@ export default class ResourceList extends Component {
     const { resourceType } = this.props.match.params;
     const { filter } = this.state;
     const { nextPage, items } = results[filter];
-    fetchResources(resourceType, filter, nextPage)
-      .then(fetched => {
+    this.cancelFetch = makeCancelable(
+      fetchResources(resourceType, filter, nextPage),
+      fetched => {
         results[filter] = {
           items: items.concat(fetched.items),
           count: fetched.count,
@@ -60,8 +62,8 @@ export default class ResourceList extends Component {
           hasMore: Boolean(fetched.nextPage)
         };
         this.setState(results);
-      })
-      .catch(error => console.error(error));
+      },
+      error => console.error(error));
   }
   componentWillReceiveProps(nextProps) {
     if (this.props.match.params !== nextProps.match.params) {
@@ -69,6 +71,7 @@ export default class ResourceList extends Component {
     }
   }
   componentWillUnmount() {
+    this.cancelFetch();
   }
   render() {
     const { match } = this.props;
