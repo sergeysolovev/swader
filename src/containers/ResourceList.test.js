@@ -8,10 +8,7 @@ import { mount } from 'enzyme'
 import sinon from 'sinon'
 import flushPromises from '../utils/flushPromises'
 
-const sandbox = sinon.sandbox.create();
-
-describe('ResourceList', () => {
-  const resources = [
+const resources = [
     'people',
     'planets',
     'starships',
@@ -19,14 +16,17 @@ describe('ResourceList', () => {
     'vehicles'
   ];
 
-  const pathOf = (res) => `/${res}`
+const pathOf = (res) => `/${res}`
 
+const sandbox = sinon.sandbox.create();
+
+describe('ResourceList', () => {
   afterEach(() => sandbox.restore());
 
   it('renders without crashing', () => {
     const match = { params: { resourceType: '' } };
     const wrapper = mount(<ResourceList match={match} />);
-  })
+  });
 
   resources.forEach(res =>
     it(`console.error for rejected fetch on ${pathOf(res)}`, () => {
