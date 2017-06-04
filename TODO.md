@@ -6,7 +6,8 @@
 - need clear statuses of fetched objects: (fetch animation | n/a | value)
 - fetching animation [. -> .. -> ... -> .] (2-3h)
 - add dependencies in About component
-- DONE: fix setState on unmounted components
+- fix 'setState on unmounted components' for Resource, Film, Films (with tests)
+- DONE: fix 'setState on unmounted component' for ResourceList
 - DONE: detail views for every resource
 - DONE: update resource list page (search/navigate)
 
