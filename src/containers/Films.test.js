@@ -11,7 +11,10 @@ const sandbox = sinon.sandbox.create();
 describe('Films', () => {
   afterEach(() => sandbox.restore());
 
-  it('renders without crashing', () => {
+  it('Films renders without crashing', () => {
+    global.fetch = jest.fn().mockImplementation(() => Promise.resolve({
+      json: () => ({ results: [] })
+    }));
     mount(<Films />);
   });
 
