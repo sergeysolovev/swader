@@ -1,6 +1,7 @@
 import React from 'react'
 import { LetLinkArray } from '../components/Indent'
 import { fetchFilms } from '../middleware/api'
+import makeCancelable from '../utils/makeCancelable'
 
 export default class Films extends React.Component {
   constructor() {
@@ -8,7 +9,14 @@ export default class Films extends React.Component {
     this.state = { }
   }
   componentDidMount() {
-    fetchFilms().then(({films}) => this.setState({films}));
+    this.cancelFetch = makeCancelable(
+      fetchFilms(),
+      ({films}) => { this.setState({films}) },
+      error => console.error(error)
+    );
+  }
+  componentWillUnmount() {
+    this.cancelFetch();
   }
   render() {
     return (

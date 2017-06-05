@@ -13,7 +13,9 @@ const RESOURCE_TYPES = [
 export function fetchFilms() {
   return api('films/')
     .then(json => ({ films: json.results.map(createFilm) }))
-    .catch(error => ({isError: true}));
+    .catch(error => Promise.reject(
+      `Failed to load 'films' from http://swapi.co`)
+    );
 }
 
 export function fetchFilm(filmId) {
