@@ -23,8 +23,16 @@ const sandbox = sinon.sandbox.create();
 describe('ResourceList', () => {
   afterEach(() => sandbox.restore());
 
-  it('renders without crashing', () => {
-    const match = { params: { resourceType: '' } };
+  it('ResourceList renders without crashing', () => {
+    global.fetch = jest.fn().mockImplementation(() =>
+      Promise.resolve({
+        json: () => ({ results: [] })
+      }));
+    const match = matchPath('/people', {
+      path: '/:resourceType',
+      exact: true,
+      strict: false
+    });
     const wrapper = mount(<ResourceList match={match} />);
   });
 
