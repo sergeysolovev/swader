@@ -146,11 +146,12 @@ export function fetchResources(resourceType, filter, page) {
 }
 
 export function fetchResource(resourceType, resourceId) {
-  validateResourceType(resourceType);
   let url = `${resourceType}/${resourceId}/`;
-  return api(url)
+  return validateResourceType(resourceType) || api(url)
     .then(json => extendWithId(json))
-    .catch(error => ({isError: true}));
+    .catch(error => Promise.reject(
+      `Failed to load /${url} from http://swapi.co`)
+    );
 }
 
 export function getUrlId(url) {

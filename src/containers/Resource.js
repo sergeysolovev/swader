@@ -1,11 +1,21 @@
 import React from 'react'
 import { fetchResource, fetchRelatedResources, isRelatedResource } from '../middleware/api'
 import { LetObj, StringProp, RelatedResourcesProp } from '../components/Indent'
+import PropTypes from 'prop-types'
+import cancelable from '../utils/cancelable'
 
 class Resource extends React.Component {
+  static propTypes = {
+    match: PropTypes.shape({
+      params: PropTypes.shape({
+        resourceType: PropTypes.string.isRequired
+      }).isRequired
+    }).isRequired
+  }
   constructor() {
     super();
     this.fetch = this.fetch.bind(this);
+    this.cancelFetch = cancelable.default;
     this.state = {
       item: {},
       resources: {}
@@ -13,21 +23,28 @@ class Resource extends React.Component {
   }
   fetch({resourceType, id}) {
     const excludedProps = ['id', 'created', 'edited', 'url' ];
-    fetchResource(resourceType, id)
-      .then(item => {
+    this.cancelFetch = cancelable.make(
+      fetchResource(resourceType, id),
+      item => {
         excludedProps.forEach(exProp => delete item[exProp]);
         this.setState({item});
-        fetchRelatedResources(item)
-          .then(resources => {
-            this.setState({resources});
-          });
-      });
+        this.cancelFetch.with(
+          fetchRelatedResources(item),
+          resources => this.setState({resources}),
+          err => console.error(err)
+        )
+      },
+      err => console.error(err)
+    );
   }
   componentWillReceiveProps(nextProps) {
     if (this.props.match.params !== nextProps.match.params) {
       this.setState({item: {}, resources: {}});
       this.fetch(nextProps.match.params);
     }
+  }
+  componentWillUnmount() {
+    this.cancelFetch.do();
   }
   componentDidMount() {
     this.fetch(this.props.match.params);
