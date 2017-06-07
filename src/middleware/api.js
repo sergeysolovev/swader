@@ -135,11 +135,8 @@ export function fetchResources(resourceType, filter, page) {
         count: json.count,
         items: json.results.map(resource => extendWithId(resource)),
         url: url,
-        nextPageUrl: json.next,
-        prevPageUrl: json.previous,
-        nextPage: getPageNumberFromUrl(json.next),
-        prevPage: getPageNumberFromUrl(json.previous),
-        page: getCurrentPageNumber(json.next, json.previous) }))
+        nextPage: getPageNumberFromUrl(json.next)
+      }))
       .catch(error => Promise.reject(
         `Failed to load '${resourceType}' from http://swapi.co`)
       );
@@ -201,14 +198,4 @@ function getResourceId(resource) {
 
 function getPageNumberFromUrl(url) {
   return url ? parseInt(Url.parse(url, true).query.page, 10) : undefined;
-}
-
-function getCurrentPageNumber(nextPageUrl, prevPageUrl) {
-  if (nextPageUrl) {
-    return getPageNumberFromUrl(nextPageUrl) - 1;
-  } else if (prevPageUrl) {
-    return getPageNumberFromUrl(nextPageUrl) + 1;
-  } else {
-    return 1;
-  }
 }
