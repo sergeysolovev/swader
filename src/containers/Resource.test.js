@@ -104,10 +104,10 @@ describe('Resource', () => {
     let wrapper;
     let stub = sinon
       .stub(api, 'fetchRelatedResources')
-      .callsFake((item, log, hasCanceled) => {
+      .callsFake(item => {
         stub.restore();
         wrapper.unmount();
-        return api.fetchRelatedResources(item, log, hasCanceled);
+        return api.fetchRelatedResources(item);
       });
     wrapper = mount(<Resource match={match} />);
     return flushPromises().then(() => {
