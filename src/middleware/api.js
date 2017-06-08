@@ -19,9 +19,12 @@ export function fetchFilms() {
 }
 
 export function fetchFilm(filmId) {
-  return api(`films/${filmId}/`)
+  const path = `films/${filmId}/`;
+  return api(path)
     .then(json => createFilm(json))
-    .catch(error => ({isError: true}));
+    .catch(error => Promise.reject(
+      `Failed to load /${path} from http://swapi.co`)
+    );
 }
 
 function getYear(film) {
