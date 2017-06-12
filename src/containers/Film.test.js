@@ -10,12 +10,14 @@ describe('Film', () => {
   const match = { params: { id: '' } };
 
   let consoleError;
+  let fetch;
   let fetchFilm;
   let fetchFilmResources;
   let componentWillUnmount;
 
   beforeEach(() => {
     consoleError = jest.spyOn(global.console, 'error');
+    fetch = jest.spyOn(global, 'fetch');
     fetchFilm = jest.spyOn(api, 'fetchFilm');
     fetchFilmResources = jest.spyOn(api, 'fetchFilmResources');
     componentWillUnmount = jest.spyOn(Film.prototype, 'componentWillUnmount');
@@ -23,6 +25,7 @@ describe('Film', () => {
 
   afterEach(() => {
     consoleError.mockRestore();
+    fetch.mockRestore();
     fetchFilm.mockRestore();
     fetchFilmResources.mockRestore();
     componentWillUnmount.mockRestore();
@@ -30,6 +33,19 @@ describe('Film', () => {
 
   it('renders without crashing', () => {
     shallow(<Film match={match} />);
+  });
+
+  it('does not crash when fetch rejects', () => {
+    fetch
+      .mockReturnValueOnce(Promise.reject())
+      .mockReturnValueOnce(Promise.reject(new Object()));
+    mount(<Film match={match} />);
+    mount(<Film match={match} />);
+    return flushPromises().then(() => {
+      expect(fetch).toHaveBeenCalledTimes(2);
+      expect(fetchFilm).toHaveBeenCalledTimes(2);
+      expect(fetchFilmResources).toHaveBeenCalledTimes(2);
+    })
   });
 
   it(`renders DOM of empty Film`, () => {
