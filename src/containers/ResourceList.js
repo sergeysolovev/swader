@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 import { fetchResources } from '../middleware/api'
-import makeCancelable from '../utils/makeCancelable'
+import cancelable from '../utils/cancelable'
 import {
   LetObj,
   StringProp,
@@ -17,13 +17,8 @@ export default class ResourceList extends Component {
       }).isRequired
     }).isRequired
   }
-  constructor(props) {
-    super(props);
-    this.onFilterChange = this.onFilterChange.bind(this);
-    this.fetchMore = this.fetchMore.bind(this);
-    this.getInitialState = this.getInitialState.bind(this);
-    this.state = this.getInitialState();
-  }
+  state = this.getInitialState();
+  cancelFetch = cancelable.default;
   getInitialState() {
     return {
       filter: '',
@@ -37,41 +32,51 @@ export default class ResourceList extends Component {
       }
     };
   }
-  onFilterChange(event) {
-    let { results } = this.state;
+  onFilterChange = (event) => {
+    event.persist();
     const filter = event.target.value;
-    results[filter] = results[filter] || {
-      items: [],
-      nextPage: undefined,
-      hasMore: true
-    };
-    this.setState({filter});
+    this.setState(prevState => ({
+      filter,
+      results: prevState.results[filter] ?
+        prevState.results :
+        Object.assign({}, prevState.results, {
+          [filter]: {
+            items: [],
+            nextPage: undefined,
+            hasMore: true
+          }
+        })
+    }));
   }
-  fetchMore() {
-    let { results } = this.state;
+  fetchMore = () => {
     const { resourceType } = this.props.match.params;
-    const { filter } = this.state;
-    const { nextPage, items } = results[filter];
-    this.cancelFetch = makeCancelable(
+    const { results, filter } = this.state;
+    const { nextPage } = results[filter];
+    this.cancelFetch = cancelable.make(
       fetchResources(resourceType, filter, nextPage),
       fetched => {
-        results[filter] = {
-          items: items.concat(fetched.items),
-          count: fetched.count,
-          nextPage: fetched.nextPage,
-          hasMore: Boolean(fetched.nextPage)
-        };
-        this.setState(results);
+        this.setState(prevState => ({
+          results: Object.assign({}, prevState.results, {
+            [filter]: {
+              items: prevState.results[filter].items.concat(fetched.items),
+              count: fetched.count,
+              nextPage: fetched.nextPage,
+              hasMore: Boolean(fetched.nextPage)
+            }
+          })
+        }));
       },
-      error => console.error(error));
+      error => {}
+    );
   }
   componentWillReceiveProps(nextProps) {
     if (this.props.match.params !== nextProps.match.params) {
+      this.cancelFetch.do();
       this.setState(this.getInitialState());
     }
   }
   componentWillUnmount() {
-    this.cancelFetch();
+    this.cancelFetch.do();
   }
   render() {
     const { match } = this.props;
@@ -79,28 +84,26 @@ export default class ResourceList extends Component {
     const { filter, results } = this.state;
     const { items, count, hasMore } = results[filter];
     return (
-      resourceType ?
-        <div className='container'>
-          <LetObj name={resourceType}>
-            <QuotedProp name='query'>
-              <input
-                className='searchBox'
-                value={filter}
-                size={filter.length || 1}
-                onChange={this.onFilterChange}
-              />
-            </QuotedProp>
-            <StringProp name='count' value={count} />
-            <AutofetchRelatedResourcesProp
-              name='results'
-              prop={resourceType}
-              items={items}
-              fetchMore={this.fetchMore}
-              hasMore={hasMore}
+      <div className='container'>
+        <LetObj name={resourceType}>
+          <QuotedProp name='query'>
+            <input
+              className='searchBox'
+              value={filter}
+              size={filter.length || 1}
+              onChange={this.onFilterChange}
             />
-          </LetObj>
-        </div> :
-        <div />
+          </QuotedProp>
+          <StringProp name='count' value={count} />
+          <AutofetchRelatedResourcesProp
+            name='results'
+            prop={resourceType}
+            items={items}
+            fetchMore={this.fetchMore}
+            hasMore={hasMore}
+          />
+        </LetObj>
+      </div>
     );
   }
 }

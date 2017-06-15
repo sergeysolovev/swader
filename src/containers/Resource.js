@@ -12,16 +12,12 @@ class Resource extends React.Component {
       }).isRequired
     }).isRequired
   }
-  constructor() {
-    super();
-    this.fetch = this.fetch.bind(this);
-    this.cancelFetch = cancelable.default;
-    this.state = {
-      item: {},
-      resources: {}
-    }
+  state = {
+    item: {},
+    resources: {}
   }
-  fetch({resourceType, id}) {
+  cancelFetch = cancelable.default;
+  fetch = ({resourceType, id}) => {
     const excludedProps = ['id', 'created', 'edited', 'url' ];
     this.cancelFetch = cancelable.make(
       fetchResource(resourceType, id),
@@ -31,10 +27,10 @@ class Resource extends React.Component {
         this.cancelFetch.with(
           fetchRelatedResources(item),
           resources => this.setState({resources}),
-          err => console.error(err)
+          err => {}
         )
       },
-      err => console.error(err)
+      err => {}
     );
   }
   componentWillReceiveProps(nextProps) {

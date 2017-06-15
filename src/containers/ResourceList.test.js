@@ -1,145 +1,90 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
 import ResourceList from './ResourceList';
-import InfiniteScroll from 'react-infinite-scroller'
+import { StringProp, QuotedProp, AutofetchRelatedResourcesProp } from '../components/Indent'
 import { MemoryRouter, Link } from 'react-router-dom'
-import { matchPath } from 'react-router'
-import { mount } from 'enzyme'
-import sinon from 'sinon'
+import { shallow, mount } from 'enzyme'
 import flushPromises from '../utils/flushPromises'
-
-const resources = [
-    'people',
-    'planets',
-    'starships',
-    'species',
-    'vehicles'
-  ];
-
-const pathOf = (res) => `/${res}`
-
-const sandbox = sinon.sandbox.create();
+import * as api from '../middleware/api.js'
 
 describe('ResourceList', () => {
-  afterEach(() => sandbox.restore());
+  const match = { params: { resourceType: '' } }
+
+  let fetchResources;
+  let consoleError;
+  let componentWillUnmount;
+
+  beforeEach(() => {
+    fetchResources = jest.spyOn(api, 'fetchResources');
+    consoleError = jest.spyOn(global.console, 'error');
+    componentWillUnmount = jest.spyOn(
+      ResourceList.prototype, 'componentWillUnmount');
+  });
+
+  afterEach(() => {
+    fetchResources.mockRestore();
+    consoleError.mockRestore();
+    componentWillUnmount.mockRestore();
+  });
 
   it('ResourceList renders without crashing', () => {
-    global.fetch = jest.fn().mockImplementation(() =>
-      Promise.resolve({
-        json: () => ({ results: [] })
-      }));
-    const match = matchPath('/people', {
-      path: '/:resourceType',
-      exact: true,
-      strict: false
-    });
-    const wrapper = mount(<ResourceList match={match} />);
+    shallow(<ResourceList match={match} />);
   });
 
-  resources.forEach(res =>
-    it(`console.error for rejected fetch on ${pathOf(res)}`, () => {
-      global.fetch = jest.fn().mockImplementation(() => Promise.reject({}));
-      global.console.error = jest.fn();
-      const match = matchPath(pathOf(res), {
-        path: '/:resourceType',
-        exact: true,
-        strict: false
-      });
-      const wrapper = mount(<ResourceList match={match} />);
-      return flushPromises().then(() => {
-        expect(console.error.mock.calls.length).toBe(1);
-        expect(console.error.mock.calls[0][0]).toBe(
-          `Failed to load '${res}' from http://swapi.co`)
-      });
-    })
-  );
-
-  it(`console.error for resource type other than: ${resources}`, () => {
-    global.fetch = jest.fn().mockImplementation(() =>
-      Promise.resolve({
-        json: () => ({ results: [] })
-      }));
-    global.console.error = jest.fn();
-    const invalidResource = 'aliens';
-    const match = matchPath(pathOf(invalidResource), {
-      path: '/:resourceType',
-      exact: true,
-      strict: false
+  it('does not crash when fetching of resources rejects', () => {
+    fetchResources.mockImplementation(() => Promise.reject(new Error()));
+    mount(<ResourceList match={match} />);
+    return flushPromises().then(() => {
+      expect(fetchResources).toBeCalled();
     });
+  });
+
+  it('renders empty list of resources', () => {
+    const resources = { items: [], count: 0 };
+    fetchResources.mockImplementation(() => Promise.resolve(resources));
     const wrapper = mount(<ResourceList match={match} />);
     return flushPromises().then(() => {
-      expect(console.error.mock.calls.length).toBe(1);
-      expect(console.error.mock.calls[0][0]).toBe(
-        "Invalid resource type 'aliens'")
-    });
+      expect(wrapper.find('table')).toHaveLength(2);
+      expect(wrapper.text()).toMatch(/let [\w]* = {/);
+      expect(wrapper.find(Link)).toHaveLength(0);
+
+      const quotedProp = wrapper
+        .find(QuotedProp)
+        .filterWhere(w => w.prop("name") === 'query');
+      expect(quotedProp).toHaveLength(1);
+      expect(quotedProp.first().children().find('input')).toHaveLength(1);
+
+      const countProp = wrapper
+        .find(StringProp)
+        .filterWhere(w => w.prop("name") === 'count');
+      expect(countProp).toHaveLength(1);
+      expect(countProp.first().prop("value")).toBe(resources.count);
+
+      const arrayProp = wrapper
+        .find(AutofetchRelatedResourcesProp)
+        .filterWhere(w => w.prop("name") === 'results');
+      expect(arrayProp).toHaveLength(1);
+      expect(arrayProp.first().prop("items")).toEqual(resources.items);
+    })
   });
 
-  resources.forEach(res =>
-    it(`renders empty list of '${res}'`, () => {
-      const results = [];
-      global.fetch = jest.fn().mockImplementation(() =>
-        Promise.resolve({
-          json: () => ({
-            results,
-            count: results.length
-          })
-        }));
-      global.console.error = jest.fn();
-      const match = matchPath(pathOf(res), {
-        path: '/:resourceType',
-        exact: true,
-        strict: false
-      });
-      const wrapper = mount(<ResourceList match={match} />)
-      return flushPromises().then(() => {
-        expect(wrapper.find('table').length).toBe(2);
-        expect(wrapper.text()).toMatch(`let ${res} = {`);
-        expect(wrapper.text()).toMatch('results: []');
-        expect(wrapper.text()).toMatch('count: "0"');
-        expect(wrapper.text()).toMatch('};');
-        expect(wrapper.find(Link).exists()).toBe(false);
-        expect(wrapper.find(InfiniteScroll).exists()).toBe(true);
-      })
-    })
-  );
-
   it('renders a list of characters with links', () => {
-    const lukeSkywalker = {
-      name: "Luke Skywalker",
-      url: "http://swapi.co/api/people/1/"
-    };
-    const dartVader = {
-      name: "Darth Vader",
-      url: "http://swapi.co/api/people/4/"
-    };
-    const people = [lukeSkywalker, dartVader];
-    global.fetch = jest.fn().mockImplementation(() =>
-      Promise.resolve({
-        json: () => ({
-          count: people.length,
-          nextPage: undefined,
-          results: people
-        })
-      })
-    );
-    const match = matchPath('/people', {
-      path: '/:resourceType',
-      exact: true,
-      strict: false
-    });
+    const match = { params: { resourceType: 'people' } };
+    const lukeSkywalker = { name: "Luke Skywalker", id: 1 };
+    const dartVader = { name: "Darth Vader", id: 4 };
+    const resources = { items: [lukeSkywalker, dartVader] };
+    fetchResources.mockImplementation(() => Promise.resolve(resources));
     const wrapper = mount(
       <MemoryRouter>
         <ResourceList match={match} />
       </MemoryRouter>
     );
     return flushPromises().then(() => {
-      expect(wrapper.find('div.container').length).toBe(1);
-      expect(wrapper.find('table').length).toBe(2);
-      expect(wrapper.text()).toMatch('let people = {');
+      expect(wrapper.find('div.container')).toHaveLength(1);
+      expect(wrapper.find('table')).toHaveLength(2);
+      expect(wrapper.text()).toMatch(/let [\w]* = {/);
       expect(wrapper.text()).toMatch('};');
       expect(wrapper.find(Link).at(0).props().to).toBe('/people/1');
       expect(wrapper.find(Link).at(1).props().to).toBe('/people/4');
-      expect(wrapper.find(InfiniteScroll).exists()).toBe(true);
       expect(wrapper.containsMatchingElement(
         <a href="/people/1">Luke Skywalker</a>)).toBe(true);
       expect(wrapper.containsMatchingElement(
@@ -147,33 +92,26 @@ describe('ResourceList', () => {
     });
   });
 
-  it('console.error that setState can only update mounted/ing component', () => {
-    global.console.error = jest.fn();
-    global.fetch = jest.fn().mockImplementation(() =>
-      Promise.resolve({
-        json: () => ({ results: [] })
-      }));
-    const match = { params: { resourceType: 'people' } };
-    sandbox.stub(ResourceList.prototype, 'componentWillUnmount');
+  it(`shows console error that
+      setState can only update mounted/ing component`, () => {
+    fetchResources.mockImplementation(() => Promise.resolve({}));
+    consoleError.mockImplementation(() => {});
+    componentWillUnmount.mockImplementation(() => {});
     mount(<ResourceList match={match} />).unmount();
     return flushPromises().then(() => {
-      expect(console.error.mock.calls.length).toBe(1);
-      expect(console.error.mock.calls[0][0]).toMatch(
-        'Warning: setState(...): Can only update a mounted or mounting component.'
-      );
+      const msg = 'Warning: setState(...): Can only update a mounted or';
+      expect(fetchResources).toBeCalled();
+      expect(componentWillUnmount).toBeCalled();
+      expect(consoleError).toBeCalledWith(expect.stringContaining(msg));
     });
   });
 
-  it('mounting and unmounting not causing errors', () => {
-    global.console.error = jest.fn();
-    global.fetch = jest.fn().mockImplementation(() =>
-      Promise.resolve({
-        json: () => ({ results: [] })
-      }));
-    const match = { params: { resourceType: 'people' } };
+  it('mounts and unmounts without errors', () => {
+    fetchResources.mockImplementation(() => Promise.resolve({}));
     mount(<ResourceList match={match} />).unmount();
     return flushPromises().then(() => {
-      expect(console.error.mock.calls.length).toBe(0);
+      expect(fetchResources).toBeCalled();
+      expect(consoleError).not.toBeCalled();
     });
   });
 });

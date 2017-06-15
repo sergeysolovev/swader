@@ -30,10 +30,10 @@ export default class Film extends React.Component {
         this.cancelFetch.with(
           fetchFilmResources(film),
           resources => this.setState({resources}),
-          err => console.error(err)
+          reason => {}
         );
       },
-      err => console.error(err)
+      reason => {}
     );
   }
   componentWillUnmount() {

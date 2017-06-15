@@ -1,31 +1,32 @@
 import React from 'react'
 import { LetLinkArray } from '../components/Indent'
 import { fetchFilms } from '../middleware/api'
-import makeCancelable from '../utils/makeCancelable'
+import cancelable from '../utils/cancelable'
 
 export default class Films extends React.Component {
-  constructor() {
-    super();
-    this.state = { }
-  }
+  state = {
+    films: []
+  };
+  cancelFetch = cancelable.default;
   componentDidMount() {
-    this.cancelFetch = makeCancelable(
+    this.cancelFetch = cancelable.make(
       fetchFilms(),
-      ({films}) => { this.setState({films}) },
-      error => console.error(error)
+      films => this.setState({films}),
+      error => {}
     );
   }
   componentWillUnmount() {
-    this.cancelFetch();
+    this.cancelFetch.do();
   }
   render() {
+    const films = this.state.films || [];
     return (
       <div className='container'>
         <LetLinkArray
           name="starWarsFilmSeries"
-          items={this.state.films}
-          display={f => `${f.episode} – ${f.title} (${f.year})`}
-          link={f => `/films/${f.id}`}
+          items={films}
+          display={x => x.displayName}
+          link={x => x.path}
         />
       </div>
     );
