@@ -1,69 +1,59 @@
 import Url from 'url'
+import toRoman from '../utils/toRoman'
 
 const API_ROOT = 'http://swapi.co/api/'
-const RESOURCE_TYPES = [
-  'films',
-  'people',
-  'planets',
-  'starships',
-  'vehicles',
-  'species'
-];
 
 export function fetchFilms() {
+  const getPath = (filmJson) => `/films/${getUrlId(filmJson.url)}`;
+  const getDisplayName = (filmJson) => {
+    const episode = toRoman(filmJson.episode_id);
+    const title = filmJson.title;
+    const year = getYear(filmJson);
+    return `${episode} – ${title} (${year})`;
+  };
   return api('films/')
-    .then(json => ({ films: json.results.map(createFilm) }))
-    .catch(error => Promise.reject(
-      `Failed to load 'films' from http://swapi.co`)
-    );
+    .then(json => json.results.map(filmJson => ({
+      path: getPath(filmJson),
+      displayName: getDisplayName(filmJson)
+    })));
 }
 
 export function fetchFilm(filmId) {
   const path = `films/${filmId}/`;
   return api(path)
-    .then(json => createFilm(json))
-    .catch(error => Promise.reject(
-      `Failed to load /${path} from http://swapi.co`)
-    );
+    .then(film => Object.assign({}, film, {
+      episode: toRoman(film.episode_id || 0),
+      opening: (film.opening_crawl || '').replace(/(\r\n)+/g, ' ')
+    }))
 }
 
-function getYear(film) {
-  return new Date(film.release_date).getFullYear();
-}
-
-// http://eddmann.com/posts/arabic-to-roman-numerals-converter-in-javascript/
-function toRoman(decimal) {
-  const chart = [
-    [ 'M', 1000],
-    ['CM',  900],
-    [ 'D',  500],
-    ['CD',  400],
-    [ 'C',  100],
-    ['XC',   90],
-    [ 'L',   50],
-    ['XL',   40],
-    [ 'X',   10],
-    ['IX',    9],
-    [ 'V',    5],
-    ['IV',    4],
-    [ 'I',    1]
+export function fetchFilmResources(film) {
+  const promise = (resourceType, resourceUrls, mapResultsTo) =>
+    resourceUrls ?
+      Promise.all(resourceUrls
+        .map(url => getUrlId(url))
+        .map(id => fetchResource(resourceType, id))
+      )
+      .then(resources => mapResultsTo(resources)) :
+      Promise.resolve(mapResultsTo([]));
+  const promises = [
+    promise('people', film.characters, x => ({'characters': x})),
+    promise('planets', film.planets, x => ({'planets': x})),
+    promise('starships', film.starships, x => ({'starships': x})),
+    promise('species', film.species, x => ({'species': x})),
+    promise('vehicles', film.vehicles, x => ({'vehicles': x}))
   ];
-  function recur(remainder, chart) {
-    if (remainder === 0) return '';
-    const [[numeral, value], ...tail] = chart;
-    return numeral.repeat(remainder / value) + recur(remainder % value, tail);
-  };
-  return recur(decimal, chart);
-}
-
-const propToResourceType = {
-  'residents': 'people',
-  'pilots': 'people',
-  'characters': 'people',
-  'homeworld': 'planets'
+  return Promise.all(promises)
+    .then(results => Object.assign({}, ...results))
 }
 
 export function getResourceTypeByProp(propName) {
+  const propToResourceType = {
+    'residents': 'people',
+    'pilots': 'people',
+    'characters': 'people',
+    'homeworld': 'planets'
+  };
   return propToResourceType[propName] || propName;
 }
 
@@ -107,25 +97,6 @@ export function fetchRelatedResources(item) {
     .then(results => Object.assign({}, ...results));
 }
 
-export function fetchFilmResources(film) {
-  const promise = (resourceType, resourceUrls, mapResultsTo) =>
-    resourceUrls ?
-      Promise.all(resourceUrls
-        .map(url => getUrlId(url))
-        .map(id => fetchResource(resourceType, id)))
-      .then(resources => Promise.resolve(mapResultsTo(resources))) :
-      Promise.resolve(mapResultsTo([]));
-  const promises = [
-    promise('people', film.characters, x => ({'characters': x})),
-    promise('planets', film.planets, x => ({'planets': x})),
-    promise('starships', film.starships, x => ({'starships': x})),
-    promise('species', film.species, x => ({'species': x})),
-    promise('vehicles', film.vehicles, x => ({'vehicles': x}))
-  ];
-  return Promise.all(promises)
-    .then(results => Object.assign({}, ...results));
-}
-
 export function fetchResources(resourceType, filter, page) {
   const url = `${resourceType}/` + (
     filter && page ? `?search=${encodeURI(filter)}&page=${page}` :
@@ -148,10 +119,7 @@ export function fetchResources(resourceType, filter, page) {
 export function fetchResource(resourceType, resourceId) {
   let url = `${resourceType}/${resourceId}/`;
   return validateResourceType(resourceType) || api(url)
-    .then(json => extendWithId(json))
-    .catch(error => Promise.reject(
-      `Failed to load /${url} from http://swapi.co`)
-    );
+    .then(json => extendWithId(json));
 }
 
 export function getUrlId(url) {
@@ -159,46 +127,36 @@ export function getUrlId(url) {
   return urlSplitted[urlSplitted.length - 2];
 }
 
-function shorten(string) {
-  const maxLength = 200;
-  let trimmed = string.substr(0, maxLength);
-  return trimmed.substr(0,
-    Math.min(trimmed.length, trimmed.lastIndexOf(' ')));
-}
-
-function createFilm(filmItem) {
-  let film = extendWithId(filmItem);
-  return Object.assign({}, film, {
-    episode: toRoman(film.episode_id),
-    year: getYear(film),
-    shortOpening: shorten(film.opening_crawl.replace(/(\r\n)+/g, ' ')),
-    opening: film.opening_crawl.replace(/(\r\n)+/g, ' ')
-  });
-}
-
 function api (endpoint) {
-  const fullUrl = (endpoint.indexOf(API_ROOT) === -1) ?
-    API_ROOT + endpoint :
-    endpoint;
+  const fullUrl = endpoint.includes(API_ROOT) ?
+    endpoint :
+    API_ROOT + endpoint;
   return fetch(fullUrl)
     .then(response => response.json());
 }
 
 function validateResourceType(resourceType) {
-  return RESOURCE_TYPES.includes(resourceType) ?
+  const validTypes = [
+    'films',
+    'people',
+    'planets',
+    'starships',
+    'vehicles',
+    'species'
+  ];
+  return validTypes.includes(resourceType) ?
     false :
-    Promise.reject(`Invalid resource type '${resourceType}'`)
+    Promise.reject(`Invalid resource type '${resourceType}'`);
 }
 
 function extendWithId(resource) {
-  return Object.assign({}, resource, {id: getResourceId(resource)});
-}
-
-function getResourceId(resource) {
-  let urlSplitted = resource.url.split('/');
-  return urlSplitted[urlSplitted.length - 2];
+  return Object.assign({}, resource, {id: getUrlId(resource.url)});
 }
 
 function getPageNumberFromUrl(url) {
   return url ? parseInt(Url.parse(url, true).query.page, 10) : undefined;
+}
+
+function getYear(film) {
+  return new Date(film.release_date).getFullYear();
 }
