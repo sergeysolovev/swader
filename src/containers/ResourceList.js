@@ -33,36 +33,45 @@ export default class ResourceList extends Component {
     };
   }
   onFilterChange = (event) => {
-    let { results } = this.state;
+    event.persist();
     const filter = event.target.value;
-    results[filter] = results[filter] || {
-      items: [],
-      nextPage: undefined,
-      hasMore: true
-    };
-    this.setState({filter});
+    this.setState(prevState => ({
+      filter,
+      results: prevState.results[filter] ?
+        prevState.results :
+        Object.assign({}, prevState.results, {
+          [filter]: {
+            items: [],
+            nextPage: undefined,
+            hasMore: true
+          }
+        })
+    }));
   }
   fetchMore = () => {
-    let { results } = this.state;
     const { resourceType } = this.props.match.params;
-    const { filter } = this.state;
-    const { nextPage, items } = results[filter];
+    const { results, filter } = this.state;
+    const { nextPage } = results[filter];
     this.cancelFetch = cancelable.make(
       fetchResources(resourceType, filter, nextPage),
       fetched => {
-        results[filter] = {
-          items: items.concat(fetched.items),
-          count: fetched.count,
-          nextPage: fetched.nextPage,
-          hasMore: Boolean(fetched.nextPage)
-        };
-        this.setState(results);
+        this.setState(prevState => ({
+          results: Object.assign({}, prevState.results, {
+            [filter]: {
+              items: prevState.results[filter].items.concat(fetched.items),
+              count: fetched.count,
+              nextPage: fetched.nextPage,
+              hasMore: Boolean(fetched.nextPage)
+            }
+          })
+        }));
       },
       error => {}
     );
   }
   componentWillReceiveProps(nextProps) {
     if (this.props.match.params !== nextProps.match.params) {
+      this.cancelFetch.do();
       this.setState(this.getInitialState());
     }
   }
