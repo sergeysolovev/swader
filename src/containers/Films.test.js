@@ -1,113 +1,87 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
 import Films from './Films';
-import { mount } from 'enzyme';
 import { Link, MemoryRouter } from 'react-router-dom';
-import sinon from 'sinon'
 import flushPromises from '../utils/flushPromises.js'
-
-const sandbox = sinon.sandbox.create();
+import { mount, shallow } from 'enzyme';
+import * as api from '../middleware/api.js'
 
 describe('Films', () => {
-  afterEach(() => sandbox.restore());
+  let consoleError;
+  let fetchFilms;
+  let componentWillUnmount;
 
-  it('Films renders without crashing', () => {
-    global.fetch = jest.fn().mockImplementation(() => Promise.resolve({
-      json: () => ({ results: [] })
-    }));
-    mount(<Films />);
+  beforeEach(() => {
+    consoleError = jest.spyOn(global.console, 'error');
+    fetchFilms = jest.spyOn(api, 'fetchFilms');
+    componentWillUnmount = jest.spyOn(Films.prototype, 'componentWillUnmount');
   });
 
-  it(`console.error for rejected fetch on /films`, () => {
-    global.fetch = jest.fn().mockImplementation(() => Promise.reject({}));
-    global.console.error = jest.fn();
-    const wrapper = mount(<Films />);
+  afterEach(() => {
+    consoleError.mockRestore();
+    fetchFilms.mockRestore();
+    componentWillUnmount.mockRestore();
+  });
+
+  it('renders without crashing', () => {
+    shallow(<Films />);
+  });
+
+  it('does not crash when fetching of films rejects', () => {
+    fetchFilms.mockImplementation(() => Promise.reject(new Error()));
+    mount(<Films />);
     return flushPromises().then(() => {
-      expect(console.error.mock.calls.length).toBe(1);
-      expect(console.error.mock.calls[0][0]).toBe(
-        `Failed to load 'films' from http://swapi.co`)
+      expect(fetchFilms).toBeCalled();
     });
   });
 
-  it("renders empty list of 'films'", () => {
-    const films = [];
-    global.fetch = jest.fn().mockImplementation(() =>
-      Promise.resolve({
-        json: () => ({
-          results: films,
-          count: films.length
-        })
-      }));
-    global.console.error = jest.fn();
-    const wrapper = mount(<Films />)
+  it("renders empty list of films", () => {
+    fetchFilms.mockImplementation(() => Promise.resolve([]));
+    const wrapper = mount(<Films />);
     return flushPromises().then(() => {
       expect(wrapper.find('table').length).toBe(1);
       expect(wrapper.text()).toMatch(`let starWarsFilmSeries = [];`);
-      expect(wrapper.find(Link).exists()).toBe(false);
-      expect(wrapper.find('tr').exists()).toBe(false);
-      expect(wrapper.find('td').exists()).toBe(false);
-      expect(wrapper.find('tbody').exists()).toBe(false);
+      expect(wrapper.find(Link)).toHaveLength(0);
+      expect(wrapper.find('tr')).toHaveLength(0);
+      expect(wrapper.find('td')).toHaveLength(0);
+      expect(wrapper.find('tbody')).toHaveLength(0);
     })
   });
 
-  it('renders a list of films with links', () => {
-    const episodeIV = {
-      title: "A New Hope",
-      episode_id: 4,
-      release_date: "1977-05-25",
-      opening_crawl: "",
-      url: "http://swapi.co/api/films/1/"
-    };
-    const films = [episodeIV];
-    global.fetch = jest.fn().mockImplementation(() =>
-      Promise.resolve({
-        json: () => ({
-          results: films,
-          count: films.length
-        })
-      })
-    );
-    const wrapper = mount(
-      <MemoryRouter>
-        <Films />
-      </MemoryRouter>
-    );
+  it('renders a list of one film', () => {
+    const film = {displayName: 'value', path: 'films/1/'};
+    fetchFilms.mockImplementation(() => Promise.resolve([film]));
+    const wrapper = mount(<MemoryRouter><Films/></MemoryRouter>);
     return flushPromises().then(() => {
-      expect(wrapper.find('div.container').length).toBe(1);
-      expect(wrapper.find('table').length).toBe(1);
+      expect(wrapper.find('div.container')).toHaveLength(1);
+      expect(wrapper.find('table')).toHaveLength(1);
       expect(wrapper.text()).toMatch('let starWarsFilmSeries = [');
       expect(wrapper.text()).toMatch('];');
-      expect(wrapper.find(Link).at(0).props().to).toBe('/films/1');
+      expect(wrapper.find(Link).at(0).props().to).toBe(film.path);
       expect(wrapper.containsMatchingElement(
-        <a href="/films/1">IV – A New Hope (1977)</a>)).toBe(true);
+        <a href={film.path}>{film.displayName}</a>)).toBeTruthy();
     });
   });
 
-  it('console.error that setState can only update mounted/ing component', () => {
-    global.console.error = jest.fn();
-    global.fetch = jest.fn().mockImplementation(() =>
-      Promise.resolve({
-        json: () => ({ results: [] })
-      }));
-    sandbox.stub(Films.prototype, 'componentWillUnmount');
+  it(`shows console error that
+      setState can only update mounted/ing component`, () => {
+    fetchFilms.mockReturnValue(Promise.resolve([]));
+    consoleError.mockImplementation(() => {});
+    componentWillUnmount.mockImplementation(() => {});
     mount(<Films />).unmount();
     return flushPromises().then(() => {
-      expect(console.error.mock.calls.length).toBe(1);
-      expect(console.error.mock.calls[0][0]).toMatch(
-        'Warning: setState(...): Can only update a mounted or mounting component.'
-      );
+      const msg = 'Warning: setState(...): Can only update a mounted or';
+      expect(fetchFilms).toBeCalled();
+      expect(componentWillUnmount).toBeCalled();
+      expect(consoleError).toBeCalledWith(expect.stringContaining(msg));
     });
   });
 
-  it('mounting and unmounting not causing errors', () => {
-    global.console.error = jest.fn();
-    global.fetch = jest.fn().mockImplementation(() =>
-      Promise.resolve({
-        json: () => ({ results: [] })
-      }));
+  it('mounts and unmounts without errors', () => {
+    fetchFilms.mockReturnValue(Promise.resolve([]));
     mount(<Films />).unmount();
     return flushPromises().then(() => {
-      expect(console.error.mock.calls.length).toBe(0);
+      expect(fetchFilms).toBeCalled();
+      expect(consoleError).not.toBeCalled();
     });
   });
 });
