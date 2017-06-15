@@ -71,10 +71,7 @@ describe('ResourceList', () => {
     const match = { params: { resourceType: 'people' } };
     const lukeSkywalker = { name: "Luke Skywalker", id: 1 };
     const dartVader = { name: "Darth Vader", id: 4 };
-    const resources = {
-      items: [lukeSkywalker, dartVader],
-      count: 2
-    };
+    const resources = { items: [lukeSkywalker, dartVader] };
     fetchResources.mockImplementation(() => Promise.resolve(resources));
     const wrapper = mount(
       <MemoryRouter>
@@ -82,8 +79,8 @@ describe('ResourceList', () => {
       </MemoryRouter>
     );
     return flushPromises().then(() => {
-      expect(wrapper.find('div.container').length).toBe(1);
-      expect(wrapper.find('table').length).toBe(2);
+      expect(wrapper.find('div.container')).toHaveLength(1);
+      expect(wrapper.find('table')).toHaveLength(2);
       expect(wrapper.text()).toMatch(/let [\w]* = {/);
       expect(wrapper.text()).toMatch('};');
       expect(wrapper.find(Link).at(0).props().to).toBe('/people/1');
@@ -97,7 +94,7 @@ describe('ResourceList', () => {
 
   it(`shows console error that
       setState can only update mounted/ing component`, () => {
-    fetchResources.mockReturnValue(Promise.resolve({}));
+    fetchResources.mockImplementation(() => Promise.resolve({}));
     consoleError.mockImplementation(() => {});
     componentWillUnmount.mockImplementation(() => {});
     mount(<ResourceList match={match} />).unmount();
@@ -110,7 +107,7 @@ describe('ResourceList', () => {
   });
 
   it('mounts and unmounts without errors', () => {
-    fetchResources.mockReturnValue(Promise.resolve([]));
+    fetchResources.mockImplementation(() => Promise.resolve({}));
     mount(<ResourceList match={match} />).unmount();
     return flushPromises().then(() => {
       expect(fetchResources).toBeCalled();
