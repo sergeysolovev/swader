@@ -9,7 +9,7 @@ describe('App', () => {
     shallow(<App />);
   });
 
-  it('App has Nav and Main components', () => {
+  it('renders Nav and Main components', () => {
     const wrapper = shallow(<App />);
     expect(wrapper.find(Nav)).toHaveLength(1);
     expect(wrapper.find(Main)).toHaveLength(1);
