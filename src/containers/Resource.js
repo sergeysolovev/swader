@@ -19,16 +19,19 @@ class Resource extends React.Component {
   socket = unplug.socket();
   fetch = ({resourceType, id}) => {
     const excludedProps = ['id', 'created', 'edited', 'url' ];
-    this.socket.plug(wire => fetchResource(resourceType, id)
-      .then(wire(item => {
+    this.socket.plug(wire => wire(
+      fetchResource(resourceType, id),
+      item => {
         excludedProps.forEach(exProp => delete item[exProp]);
         this.setState({item});
-        fetchRelatedResources(item)
-          .then(wire(resources => this.setState({resources})))
-          .catch(err => {})
-      }))
-      .catch(err => {})
-    );
+        wire(
+          fetchRelatedResources(item),
+          resources => this.setState({resources}),
+          err => {}
+        )
+      },
+      err => {}
+    ));
   }
   componentWillReceiveProps(nextProps) {
     if (this.props.match.params !== nextProps.match.params) {

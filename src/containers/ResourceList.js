@@ -52,8 +52,9 @@ export default class ResourceList extends Component {
     const { resourceType } = this.props.match.params;
     const { results, filter } = this.state;
     const { nextPage } = results[filter];
-    this.socket.plug(wire => fetchResources(resourceType, filter, nextPage)
-      .then(wire(fetched => {
+    this.socket.plug(wire => wire(
+      fetchResources(resourceType, filter, nextPage),
+      fetched => {
         this.setState(prevState => ({
           results: Object.assign({}, prevState.results, {
             [filter]: {
@@ -64,9 +65,9 @@ export default class ResourceList extends Component {
             }
           })
         }));
-      }))
-      .catch(error => {})
-    );
+      },
+      reason => {}
+    ));
   }
   componentWillReceiveProps(nextProps) {
     if (this.props.match.params !== nextProps.match.params) {

@@ -9,10 +9,11 @@ export default class Films extends React.Component {
   };
   socket = unplug.socket();
   componentDidMount() {
-    this.socket.plug(wire => fetchFilms()
-      .then(wire(films => this.setState({films})))
-      .catch(error => {})
-    );
+    this.socket.plug(wire => wire(
+      fetchFilms(),
+      films => this.setState({films}),
+      error => {}
+    ));
   }
   componentWillUnmount() {
     this.socket.unplug();

@@ -22,103 +22,29 @@ describe('unplug', () => {
       });
     });
 
-    describe('.plug(closure) where closure: (wire) => {...}', () => {
-      it('returns the same value as passed closure', () => {
-        const value = {};
+    describe('.plug()', () => {
+      it('resolves the same value as original promise', () => {
         const socket = unplug.socket();
-        expect(socket.plug(wire => value)).toBe(value);
+        const value = {};
+        const promise = Promise.resolve(value);
+        const plugged = socket.plug(wire => wire(promise));
+        return expect(plugged.extract).resolves.toBe(value);
       });
 
-      describe('wire: ((args) => a) => ((args) => a)', () => {
-        it('always returns a function' , () => {
-          const value = {};
-          const socket = unplug.socket();
-          socket.plug(wire => {
-            expect(wire()).toEqual(expect.any(Function));
-            expect(wire({})).toEqual(expect.any(Function));
-            expect(wire(() => {})).toEqual(expect.any(Function));
-            socket.unplug();
-            expect(wire()).toEqual(expect.any(Function));
-            expect(wire({})).toEqual(expect.any(Function));
-            expect(wire(() => {})).toEqual(expect.any(Function));
-          });
-        });
+      it('rejects the same reason as original promise', () => {
+        const socket = unplug.socket();
+        const reason = new Error();
+        const promise = Promise.reject(reason);
+        const plugged = socket.plug(wire => wire(promise));
+        return expect(plugged.extract).rejects.toBe(reason);
+      });
 
-        describe('wired: ((args) => a)', () => {
-          it(`calls target func with
-              the same args as wired (stubs it)` , () => {
-            const socket = unplug.socket();
-            const targetFunc = jest.fn();
-            socket.plug(wire => {
-              const wired = wire(targetFunc);
-              [[], [undefined], [{}], [{},{}]].forEach(targetArgs => {
-                wired(...targetArgs);
-                expect(targetFunc).toBeCalledWith(...targetArgs);
-              })
-            });
-          });
-
-          it(`does not call target func if socket was unplugged
-              before wiring`, () => {
-            const socket = unplug.socket();
-            const targetFunc = jest.fn();
-            socket.plug(wire => {
-              socket.unplug();
-              const wired = wire(targetFunc);
-              [[], [undefined], [{}], [{},{}]].forEach(targetArgs =>
-                wired(...targetArgs));
-            });
-            expect(targetFunc).not.toBeCalled();
-          });
-
-          it(`does not call target func if socket was unplugged
-              after wiring`, () => {
-            const socket = unplug.socket();
-            const targetFunc = jest.fn();
-            socket.plug(wire => {
-              const wired = wire(targetFunc);
-              socket.unplug();
-              [[], [undefined], [{}], [{},{}]].forEach(targetArgs =>
-                wired(...targetArgs));
-            });
-            expect(targetFunc).not.toBeCalled();
-          });
-
-          it(`does not call target func if socket was plugged again`, () => {
-            const socket = unplug.socket();
-            const targetFunc = jest.fn();
-            const plug = ({plugBeforeWiring, plugAfterWiring}) => {
-              socket.plug(wire => {
-                if (plugBeforeWiring) { socket.plug(Function()); }
-                const wired = wire(targetFunc);
-                if (plugAfterWiring) { socket.plug(Function()); }
-                wired();
-              });
-            }
-
-            [true, false, true].forEach(plugAfterWiring =>
-              plug({plugAfterWiring}));
-            expect(targetFunc).toHaveBeenCalledTimes(1);
-
-            targetFunc.mockClear();
-
-            [false, true, false].forEach(plugAfterWiring =>
-              plug({plugAfterWiring}));
-            expect(targetFunc).toHaveBeenCalledTimes(2);
-
-            targetFunc.mockClear();
-
-            [true, false, true].forEach(plugBeforeWiring =>
-              plug({plugBeforeWiring}));
-            expect(targetFunc).toHaveBeenCalledTimes(1);
-
-            targetFunc.mockClear();
-
-            [false, true, false].forEach(plugBeforeWiring =>
-              plug({plugBeforeWiring}));
-            expect(targetFunc).toHaveBeenCalledTimes(2);
-          });
-        });
+      it('resolves undefined if it was unplugged', () => {
+        const socket = unplug.socket();
+        const promise = Promise.resolve({});
+        const plugged = socket.plug(wire => wire(promise));
+        socket.unplug();
+        return expect(plugged.extract).resolves.toBeUndefined();
       });
     });
   });

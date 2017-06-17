@@ -23,15 +23,18 @@ export default class Film extends React.Component {
   }
   componentDidMount() {
     const {params} = this.props.match;
-    this.socket.plug(wire => fetchFilm(params.id)
-      .then(wire(film => {
+    this.socket.plug(wire => wire(
+      fetchFilm(params.id),
+      film => {
         this.setState({film});
-        fetchFilmResources(film)
-          .then(wire(resources => this.setState({resources})))
-          .catch(reason => {})
-      }))
-      .catch(reason => {})
-    );
+        wire(
+          fetchFilmResources(film),
+          resources => this.setState({resources}),
+          reason => {}
+        );
+      },
+      reason => {}
+    ));
   }
   componentWillUnmount() {
     this.socket.unplug();
