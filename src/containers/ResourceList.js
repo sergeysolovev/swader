@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 import { fetchResources } from '../middleware/api'
-import cancelable from '../utils/cancelable'
+import unplug from '../utils/unplug'
 import {
   LetObj,
   StringProp,
@@ -18,7 +18,7 @@ export default class ResourceList extends Component {
     }).isRequired
   }
   state = this.getInitialState();
-  cancelFetch = cancelable.default;
+  socket = unplug.socket();
   getInitialState() {
     return {
       filter: '',
@@ -52,9 +52,8 @@ export default class ResourceList extends Component {
     const { resourceType } = this.props.match.params;
     const { results, filter } = this.state;
     const { nextPage } = results[filter];
-    this.cancelFetch = cancelable.make(
-      fetchResources(resourceType, filter, nextPage),
-      fetched => {
+    this.socket.plug(wire => fetchResources(resourceType, filter, nextPage)
+      .then(wire(fetched => {
         this.setState(prevState => ({
           results: Object.assign({}, prevState.results, {
             [filter]: {
@@ -65,18 +64,17 @@ export default class ResourceList extends Component {
             }
           })
         }));
-      },
-      error => {}
+      }))
+      .catch(error => {})
     );
   }
   componentWillReceiveProps(nextProps) {
     if (this.props.match.params !== nextProps.match.params) {
-      this.cancelFetch.do();
       this.setState(this.getInitialState());
     }
   }
   componentWillUnmount() {
-    this.cancelFetch.do();
+    this.socket.unplug();
   }
   render() {
     const { match } = this.props;

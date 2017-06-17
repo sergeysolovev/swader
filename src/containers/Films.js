@@ -1,22 +1,21 @@
 import React from 'react'
 import { LetLinkArray } from '../components/Indent'
 import { fetchFilms } from '../middleware/api'
-import cancelable from '../utils/cancelable'
+import unplug from '../utils/unplug'
 
 export default class Films extends React.Component {
   state = {
     films: []
   };
-  cancelFetch = cancelable.default;
+  socket = unplug.socket();
   componentDidMount() {
-    this.cancelFetch = cancelable.make(
-      fetchFilms(),
-      films => this.setState({films}),
-      error => {}
+    this.socket.plug(wire => fetchFilms()
+      .then(wire(films => this.setState({films})))
+      .catch(error => {})
     );
   }
   componentWillUnmount() {
-    this.cancelFetch.do();
+    this.socket.unplug();
   }
   render() {
     const films = this.state.films || [];

@@ -2,7 +2,7 @@ import React from 'react'
 import { fetchFilm, fetchFilmResources } from '../middleware/api'
 import { LetObj, StringProp, RelatedResourcesProp } from '../components/Indent'
 import PropTypes from 'prop-types'
-import cancelable from '../utils/cancelable'
+import unplug from '../utils/unplug'
 
 export default class Film extends React.Component {
   static propTypes = {
@@ -15,7 +15,7 @@ export default class Film extends React.Component {
   constructor()
   {
     super();
-    this.cancelFetch = cancelable.default;
+    this.socket = unplug.socket();
     this.state = {
       film: {},
       resources: {}
@@ -23,21 +23,18 @@ export default class Film extends React.Component {
   }
   componentDidMount() {
     const {params} = this.props.match;
-    this.cancelFetch = cancelable.make(
-      fetchFilm(params.id),
-      film => {
+    this.socket.plug(wire => fetchFilm(params.id)
+      .then(wire(film => {
         this.setState({film});
-        this.cancelFetch.with(
-          fetchFilmResources(film),
-          resources => this.setState({resources}),
-          reason => {}
-        );
-      },
-      reason => {}
+        fetchFilmResources(film)
+          .then(wire(resources => this.setState({resources})))
+          .catch(reason => {})
+      }))
+      .catch(reason => {})
     );
   }
   componentWillUnmount() {
-    this.cancelFetch.do();
+    this.socket.unplug();
   }
   render() {
     const film = this.state.film;

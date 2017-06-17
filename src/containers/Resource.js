@@ -2,7 +2,7 @@ import React from 'react'
 import { fetchResource, fetchRelatedResources, isRelatedResource } from '../middleware/api'
 import { LetObj, StringProp, RelatedResourcesProp } from '../components/Indent'
 import PropTypes from 'prop-types'
-import cancelable from '../utils/cancelable'
+import unplug from '../utils/unplug'
 
 class Resource extends React.Component {
   static propTypes = {
@@ -16,21 +16,18 @@ class Resource extends React.Component {
     item: {},
     resources: {}
   }
-  cancelFetch = cancelable.default;
+  socket = unplug.socket();
   fetch = ({resourceType, id}) => {
     const excludedProps = ['id', 'created', 'edited', 'url' ];
-    this.cancelFetch = cancelable.make(
-      fetchResource(resourceType, id),
-      item => {
+    this.socket.plug(wire => fetchResource(resourceType, id)
+      .then(wire(item => {
         excludedProps.forEach(exProp => delete item[exProp]);
         this.setState({item});
-        this.cancelFetch.with(
-          fetchRelatedResources(item),
-          resources => this.setState({resources}),
-          err => {}
-        )
-      },
-      err => {}
+        fetchRelatedResources(item)
+          .then(wire(resources => this.setState({resources})))
+          .catch(err => {})
+      }))
+      .catch(err => {})
     );
   }
   componentWillReceiveProps(nextProps) {
@@ -40,7 +37,7 @@ class Resource extends React.Component {
     }
   }
   componentWillUnmount() {
-    this.cancelFetch.do();
+    this.socket.unplug();
   }
   componentDidMount() {
     this.fetch(this.props.match.params);
