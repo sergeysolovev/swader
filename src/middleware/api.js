@@ -1,21 +1,35 @@
 import Url from 'url'
 import toRoman from '../utils/toRoman'
+import swdb from 'idb-keyval'
 
 const API_ROOT = 'http://swapi.co/api/'
 
 export function fetchFilms() {
-  const getPath = (filmJson) => `/films/${getUrlId(filmJson.url)}`;
-  const getDisplayName = (filmJson) => {
-    const episode = toRoman(filmJson.episode_id);
-    const title = filmJson.title;
-    const year = getYear(filmJson);
-    return `${episode} – ${title} (${year})`;
+  const filmsPath = '/films';
+  const fetchFilmsOverApi = () => {
+    const getPath = (filmJson) => `${filmsPath}/${getUrlId(filmJson.url)}`;
+    const getDisplayName = (filmJson) => {
+      const episode = toRoman(filmJson.episode_id);
+      const title = filmJson.title;
+      const year = getYear(filmJson);
+      return `${episode} – ${title} (${year})`;
+    };
+    return api(filmsPath)
+      .then(json => json.results.map(filmJson => ({
+        path: getPath(filmJson),
+        displayName: getDisplayName(filmJson)
+      })));
   };
-  return api('films/')
-    .then(json => json.results.map(filmJson => ({
-      path: getPath(filmJson),
-      displayName: getDisplayName(filmJson)
-    })));
+  return swdb
+    .get(filmsPath)
+    .then(films => films || fetchFilmsOverApi()
+      .then(films => {
+        swdb
+          .set(filmsPath, films)
+          .catch(err => console.error(`failed to store ${filmsPath} in idb`, err));
+        return films;
+      })
+    );
 }
 
 export function fetchFilm(filmId) {
