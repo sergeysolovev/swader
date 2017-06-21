@@ -1,35 +1,71 @@
 import Url from 'url'
 import toRoman from '../utils/toRoman'
-import swdb from 'idb-keyval'
+import db from 'idb-keyval'
+import stringHash from 'string-hash'
 
 const API_ROOT = 'http://swapi.co/api/'
 
 export function fetchFilms() {
-  const filmsPath = '/films';
+  const path = 'films/';
   const fetchFilmsOverApi = () => {
-    const getPath = (filmJson) => `${filmsPath}/${getUrlId(filmJson.url)}`;
+    const getPath = (filmJson) => filmJson.url ?
+      path + getUrlId(filmJson.url) : '#';
     const getDisplayName = (filmJson) => {
-      const episode = toRoman(filmJson.episode_id);
+      const episode = toRoman(filmJson.episode_id || 0);
       const title = filmJson.title;
       const year = getYear(filmJson);
       return `${episode} – ${title} (${year})`;
     };
-    return api(filmsPath)
+    return api(path)
       .then(json => json.results.map(filmJson => ({
+        created: filmJson.created,
+        edited: filmJson.edited,
         path: getPath(filmJson),
         displayName: getDisplayName(filmJson)
       })));
   };
-  return swdb
-    .get(filmsPath)
-    .then(films => films || fetchFilmsOverApi()
-      .then(films => {
-        swdb
-          .set(filmsPath, films)
-          .catch(err => console.error(`failed to store ${filmsPath} in idb`, err));
-        return films;
-      })
-    );
+  const setIdbRecord = films => {
+    const isNonEmptyArray = Array.isArray(films) && films.length > 0;
+    if (isNonEmptyArray) {
+      const newRecord = {
+        films,
+        fetchedOn: new Date(),
+        hash: stringHash(films.map(f => f.created + f.edited).join()),
+      };
+      db.get(path)
+        .then(record => {
+          record = record || {};
+          if (record.hash !== newRecord.hash) {
+            db.set(path, newRecord)
+              .catch(err => console.error(`failed to store ${path} in idb`, err));
+          }
+        });
+    }
+  };
+  return db.get(path)
+    .then(record => {
+      if (record) {
+        const maxAge = 86400000;
+        const isExpired = (new Date() - record.fetchedOn) >= maxAge;
+        if (isExpired) {
+          return fetchFilmsOverApi()
+            .then(films => {
+              setIdbRecord(films);
+              return films;
+            })
+            .catch(() => {
+              return record.films;
+            });
+        }
+        return record.films;
+      } else {
+        return fetchFilmsOverApi()
+          .then(films => {
+            setIdbRecord(films);
+            return films;
+          });
+      }
+    });
 }
 
 export function fetchFilm(filmId) {
