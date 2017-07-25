@@ -16,30 +16,251 @@ jest.mock('idb-keyval', () => {
 });
 
 describe('middleware/api', () => {
+  const addSeconds = (date, seconds) => new Date(
+    new Date(date).setSeconds(date.getSeconds() + seconds)
+  );
+
+  const firstFilm = {
+    created: '2014-12-10T14:23:31.880000Z',
+    edited: '2015-04-11T09:46:52.774897Z'
+  };
+  const firstFilmEdited = {
+    created: '2014-12-10T14:23:31.880000Z',
+    edited: '2015-04-11T09:46:52.774898Z'
+  };
+
   afterEach(() => {
     jest.clearAllMocks();
     db.clear();
     mockdate.reset();
   });
 
+  describe('fetchResource', () => {
+    const fetchStub = (resource) => Promise.resolve({
+      json() { return resource; }
+    });
+
+    const res = {
+      created: '2014-12-10T14:23:31.880000Z',
+      edited: '2015-04-11T09:46:52.774897Z',
+      // todo: remove
+      url: 'http://swapi.co/api/people/42/'
+    }
+
+    it('calls fetch only once within 24 hours', () => {
+      fetch.mockReturnValue(fetchStub(res));
+      return Promise.resolve()
+        .then(() => api.fetchResource('people', 42))
+        .then(() => api.fetchResource('people', 42))
+        .then(() => api.fetchResource('people', 42))
+        .then(() => expect(fetch).toHaveBeenCalledTimes(1));
+    });
+
+    it('calls fetch again if last fetch was more than 24 hours ago', () => {
+      const now = new Date();
+      fetch.mockReturnValue(fetchStub(res));
+      return Promise.resolve()
+        .then(() => {
+          mockdate.set(now);
+          return api.fetchResource('people', 42);
+        })
+        .then(() => expect(fetch).toHaveBeenCalledTimes(1))
+        .then(() => {
+          mockdate.set(addSeconds(now, 24 * 60 * 60 - 1));
+          return api.fetchResource('people', 42);
+        })
+        .then(() => expect(fetch).toHaveBeenCalledTimes(1))
+        .then(() => {
+          mockdate.set(addSeconds(now, 24 * 60 * 60));
+          return api.fetchResource('people', 42);
+        })
+        .then(() => expect(fetch).toHaveBeenCalledTimes(2));
+    });
+
+    it(`sets idb record with films, fetchedOn timestamp and hash`, () => {
+      fetch.mockReturnValue(fetchStub(res));
+      return api.fetchResource('people', 42)
+        .then(() => {
+          expect(db.set).toBeCalledWith(`people/42/`, expect.objectContaining({
+            fetchedOn: expect.any(Date),
+            res: expect.objectContaining({
+              created: expect.any(String),
+              edited: expect.any(String)
+            }),
+            hash: expect.any(Number)
+          }));
+          const idbRecord = db.set.mock.calls[0][1];
+          expect((idbRecord.fetchedOn - new Date()) / 1000.0).toBeCloseTo(0);
+          expect(idbRecord.hash).toEqual(4094460650);
+        });
+    });
+
+    it(`does not update idb record
+        when got the same values of res.created, res.updated
+        on refetch`, () => {
+      fetch
+        .mockReturnValue(fetchStub(res));
+      const now = new Date();
+      return Promise.resolve()
+        .then(() => {
+          mockdate.set(now);
+          return api.fetchResource('people', 42)
+        })
+        .then(() => {
+          mockdate.set(addSeconds(now, 24 * 60 * 60));
+          return api.fetchResource('people', 42)
+        })
+        .then(() => {
+          expect(fetch).toHaveBeenCalledTimes(2);
+          expect(db.set).toHaveBeenCalledTimes(1);
+        });
+    });
+  });
+
+  describe('fetchFilm', () => {
+    const fetchStub = (film) => Promise.resolve({
+      json() { return film; }
+    });
+
+    it('calls fetch only once within 24 hours', () => {
+      fetch.mockReturnValue(fetchStub(firstFilm));
+      return Promise.resolve()
+        .then(() => api.fetchFilm())
+        .then(() => api.fetchFilm())
+        .then(() => api.fetchFilm())
+        .then(() => expect(fetch).toHaveBeenCalledTimes(1));
+    });
+
+    it('calls fetch again if last fetch was more than 24 hours ago', () => {
+      const now = new Date();
+      fetch.mockReturnValue(fetchStub(firstFilm));
+      return Promise.resolve()
+        .then(() => {
+          mockdate.set(now);
+          return api.fetchFilm();
+        })
+        .then(() => expect(fetch).toHaveBeenCalledTimes(1))
+        .then(() => {
+          mockdate.set(addSeconds(now, 24 * 60 * 60 - 1));
+          return api.fetchFilm();
+        })
+        .then(() => expect(fetch).toHaveBeenCalledTimes(1))
+        .then(() => {
+          mockdate.set(addSeconds(now, 24 * 60 * 60));
+          return api.fetchFilm();
+        })
+        .then(() => expect(fetch).toHaveBeenCalledTimes(2));
+    });
+
+    it(`sets idb record with films, fetchedOn timestamp and hash`, () => {
+      const filmId = 42;
+      fetch.mockReturnValue(fetchStub(firstFilm));
+      return api.fetchFilm(filmId)
+        .then(() => {
+          expect(db.set).toBeCalledWith(`films/${filmId}/`, expect.objectContaining({
+            fetchedOn: expect.any(Date),
+            film: expect.objectContaining({
+              created: expect.any(String),
+              edited: expect.any(String)
+            }),
+            hash: expect.any(Number)
+          }));
+          const idbRecord = db.set.mock.calls[0][1];
+          expect((idbRecord.fetchedOn - new Date()) / 1000.0).toBeCloseTo(0);
+          expect(idbRecord.hash).toEqual(4094460650);
+        });
+    });
+
+    it(`does not update idb record
+        when got the same values of film.created, film.updated
+        on refetch`, () => {
+      fetch
+        .mockReturnValue(fetchStub(firstFilm));
+      const now = new Date();
+      return Promise.resolve()
+        .then(() => {
+          mockdate.set(now);
+          return api.fetchFilm();
+        })
+        .then(() => {
+          mockdate.set(addSeconds(now, 24 * 60 * 60));
+          return api.fetchFilm();
+        })
+        .then(() => {
+          expect(fetch).toHaveBeenCalledTimes(2);
+          expect(db.set).toHaveBeenCalledTimes(1);
+        });
+    });
+
+    it(`updates idb record
+        when film.created or film.edited changed
+        on refetch`, () => {
+      const now = new Date();
+      fetch
+        .mockReturnValueOnce(fetchStub(firstFilm))
+        .mockReturnValueOnce(fetchStub(firstFilm))
+        .mockReturnValueOnce(fetchStub(firstFilmEdited))
+      return Promise.resolve()
+        .then(() => {
+          mockdate.set(now);
+          return api.fetchFilm();
+        })
+        .then(() => {
+          expect(fetch).toHaveBeenCalledTimes(1);
+          expect(db.set).toHaveBeenCalledTimes(1);
+        })
+        .then(() => {
+          mockdate.set(addSeconds(now, 24 * 60 * 60));
+          return api.fetchFilm();
+        })
+        .then(() => {
+          expect(fetch).toHaveBeenCalledTimes(2);
+          expect(db.set).toHaveBeenCalledTimes(1);
+        })
+        .then(() => {
+          mockdate.set(addSeconds(now, 2 * 24 * 60 * 60));
+          return api.fetchFilm();
+        })
+        .then(() => {
+          expect(fetch).toHaveBeenCalledTimes(3);
+          expect(db.set).toHaveBeenCalledTimes(2);
+        });
+    });
+
+    it(`does not update idb record
+        when film.created or film.edited changed
+        on *failed* refetch`, () => {
+      const now = new Date();
+      fetch
+        .mockReturnValueOnce(fetchStub(firstFilm))
+        .mockReturnValueOnce(Promise.reject(new Error()))
+      return Promise.resolve()
+        .then(() => {
+          mockdate.set(now);
+          return api.fetchFilm();
+        })
+        .then(() => {
+          expect(fetch).toHaveBeenCalledTimes(1);
+          expect(db.set).toHaveBeenCalledTimes(1);
+        })
+        .then(() => {
+          mockdate.set(addSeconds(now, 24 * 60 * 60));
+          return api.fetchFilm();
+        })
+        .then(() => {
+          expect(fetch).toHaveBeenCalledTimes(2);
+          expect(db.set).toHaveBeenCalledTimes(1);
+        });
+    });
+  });
+
   describe('fetchFilms', () => {
-    const firstFilm = {
-      created: '2014-12-10T14:23:31.880000Z',
-      edited: '2015-04-11T09:46:52.774897Z'
-    };
-    const firstFilmEdited = {
-      created: '2014-12-10T14:23:31.880000Z',
-      edited: '2015-04-11T09:46:52.774898Z'
-    };
     const createdFilm = {
       created: '2014-12-20T10:57:57.886000Z',
       edited: '2014-12-20T10:57:57.886000Z'
     };
     const fetchFilms = jest.spyOn(api, 'fetchFilms');
     const fetch = jest.spyOn(global, 'fetch');
-    const addSeconds = (date, seconds) => new Date(
-      new Date(date).setSeconds(date.getSeconds() + seconds)
-    );
     const fetchStub = (...args) => Promise.resolve({
       json() {
         return { results: args };

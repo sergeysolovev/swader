@@ -70,11 +70,103 @@ export function fetchFilms() {
 
 export function fetchFilm(filmId) {
   const path = `films/${filmId}/`;
-  return api(path)
-    .then(film => Object.assign({}, film, {
-      episode: toRoman(film.episode_id || 0),
-      opening: (film.opening_crawl || '').replace(/(\r\n)+/g, ' ')
-    }))
+  const fetchFilmOverApi = () => {
+    return api(path)
+      .then(film => Object.assign({}, film, {
+        episode: toRoman(film.episode_id || 0),
+        opening: (film.opening_crawl || '').replace(/(\r\n)+/g, ' ')
+      }));
+  }
+  const setIdbRecord = film => {
+    const newRecord = {
+      film,
+      fetchedOn: new Date(),
+      hash: stringHash(film.created + film.edited),
+    };
+    db.get(path)
+      .then(record => {
+        record = record || {};
+        if (record.hash !== newRecord.hash) {
+          db.set(path, newRecord)
+            .catch(err => console.error(`failed to store ${path} in idb`, err));
+        }
+      });
+  };
+  return db.get(path)
+    .then(record => {
+      if (record) {
+        const maxAge = 86400000;
+        const isExpired = (new Date() - record.fetchedOn) >= maxAge;
+        if (isExpired) {
+          return fetchFilmOverApi()
+            .then(film => {
+              setIdbRecord(film);
+              return film;
+            })
+            .catch(() => {
+              return record.film;
+            });
+        }
+        return record.film;
+      } else {
+        return fetchFilmOverApi()
+          .then(film => {
+            setIdbRecord(film);
+            return film;
+          });
+      }
+    });
+}
+
+export function fetchResource(resourceType, resourceId) {
+  const path = `${resourceType}/${resourceId}/`;
+  const fetchResourceOverApi = () => {
+    return validateResourceType(resourceType) || api(path)
+    .then(json => extendWithId(json));
+  }
+
+  const setIdbRecord = res => {
+    const newRecord = {
+      res,
+      fetchedOn: new Date(),
+      hash: stringHash(res.created + res.edited),
+    };
+    db.get(path)
+      .then(record => {
+        record = record || {};
+        if (record.hash !== newRecord.hash) {
+          db.set(path, newRecord)
+            .catch(err => console.error(`failed to store ${path} in idb`, err));
+        }
+      });
+  };
+
+  //return fetchResourceOverApi();
+
+  return db.get(path)
+    .then(record => {
+      if (record) {
+        const maxAge = 86400000;
+        const isExpired = (new Date() - record.fetchedOn) >= maxAge;
+        if (isExpired) {
+          return fetchResourceOverApi()
+            .then(res => {
+              setIdbRecord(res);
+              return res;
+            })
+            .catch(() => {
+              return record.film;
+            });
+        }
+        return record.res;
+      } else {
+        return fetchResourceOverApi()
+          .then(res => {
+            setIdbRecord(res);
+            return res;
+          });
+      }
+    });
 }
 
 export function fetchFilmResources(film) {
@@ -164,12 +256,6 @@ export function fetchResources(resourceType, filter, page) {
       .catch(error => Promise.reject(
         `Failed to load '${resourceType}' from http://swapi.co`)
       );
-}
-
-export function fetchResource(resourceType, resourceId) {
-  let url = `${resourceType}/${resourceId}/`;
-  return validateResourceType(resourceType) || api(url)
-    .then(json => extendWithId(json));
 }
 
 export function getUrlId(url) {
