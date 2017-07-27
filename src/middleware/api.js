@@ -3,7 +3,7 @@ import toRoman from '../utils/toRoman'
 import db from 'idb-keyval'
 import stringHash from 'string-hash'
 
-export const API_ROOT = 'http://swapi.co/api/'
+export const API_ROOT = 'https://swapi.now.sh/api/';
 
 export function fetchFilms() {
   const path = 'films/';
