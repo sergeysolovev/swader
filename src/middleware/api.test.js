@@ -81,7 +81,7 @@ describe('middleware/api', () => {
       fetch.mockReturnValue(fetchStub(res));
       return api.fetchResource('people', 42)
         .then(() => {
-          expect(db.set).toBeCalledWith(`people/42/`, expect.objectContaining({
+          expect(db.set).toBeCalledWith(api.API_ROOT + `people/42/`, expect.objectContaining({
             fetchedOn: expect.any(Date),
             res: expect.objectContaining({
               created: expect.any(String),
@@ -157,9 +157,9 @@ describe('middleware/api', () => {
       fetch.mockReturnValue(fetchStub(firstFilm));
       return api.fetchFilm(filmId)
         .then(() => {
-          expect(db.set).toBeCalledWith(`films/${filmId}/`, expect.objectContaining({
+          expect(db.set).toBeCalledWith(api.API_ROOT + `films/${filmId}/`, expect.objectContaining({
             fetchedOn: expect.any(Date),
-            film: expect.objectContaining({
+            res: expect.objectContaining({
               created: expect.any(String),
               edited: expect.any(String)
             }),

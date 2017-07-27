@@ -3,7 +3,7 @@ import toRoman from '../utils/toRoman'
 import db from 'idb-keyval'
 import stringHash from 'string-hash'
 
-const API_ROOT = 'http://swapi.co/api/'
+export const API_ROOT = 'http://swapi.co/api/'
 
 export function fetchFilms() {
   const path = 'films/';
@@ -69,30 +69,31 @@ export function fetchFilms() {
 }
 
 export function fetchFilm(filmId) {
-  const path = `films/${filmId}/`;
+  const uri = API_ROOT + `films/${filmId}/`;
   const fetchFilmOverApi = () => {
-    return api(path)
+    return api(uri)
       .then(film => Object.assign({}, film, {
+        id: film.url && getUrlId(film.url),
         episode: toRoman(film.episode_id || 0),
         opening: (film.opening_crawl || '').replace(/(\r\n)+/g, ' ')
       }));
   }
-  const setIdbRecord = film => {
+  const setIdbRecord = res => {
     const newRecord = {
-      film,
+      res,
       fetchedOn: new Date(),
-      hash: stringHash(film.created + film.edited),
+      hash: stringHash(res.created + res.edited),
     };
-    db.get(path)
+    db.get(uri)
       .then(record => {
         record = record || {};
         if (record.hash !== newRecord.hash) {
-          db.set(path, newRecord)
-            .catch(err => console.error(`failed to store ${path} in idb`, err));
+          db.set(uri, newRecord)
+            .catch(err => console.error(`failed to store ${uri} in idb`, err));
         }
       });
   };
-  return db.get(path)
+  return db.get(uri)
     .then(record => {
       if (record) {
         const maxAge = 86400000;
@@ -107,7 +108,7 @@ export function fetchFilm(filmId) {
               return record.film;
             });
         }
-        return record.film;
+        return record.res;
       } else {
         return fetchFilmOverApi()
           .then(film => {
@@ -119,9 +120,9 @@ export function fetchFilm(filmId) {
 }
 
 export function fetchResource(resourceType, resourceId) {
-  const path = `${resourceType}/${resourceId}/`;
+  const uri = API_ROOT + `${resourceType}/${resourceId}/`;
   const fetchResourceOverApi = () => {
-    return validateResourceType(resourceType) || api(path)
+    return validateResourceType(resourceType) || api(uri)
     .then(json => extendWithId(json));
   }
 
@@ -131,19 +132,17 @@ export function fetchResource(resourceType, resourceId) {
       fetchedOn: new Date(),
       hash: stringHash(res.created + res.edited),
     };
-    db.get(path)
+    db.get(uri)
       .then(record => {
         record = record || {};
         if (record.hash !== newRecord.hash) {
-          db.set(path, newRecord)
-            .catch(err => console.error(`failed to store ${path} in idb`, err));
+          db.set(uri, newRecord)
+            .catch(err => console.error(`failed to store ${uri} in idb`, err));
         }
       });
   };
 
-  //return fetchResourceOverApi();
-
-  return db.get(path)
+  return db.get(uri)
     .then(record => {
       if (record) {
         const maxAge = 86400000;
