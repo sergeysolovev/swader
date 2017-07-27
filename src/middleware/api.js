@@ -68,57 +68,6 @@ export function fetchFilms() {
     });
 }
 
-export function fetchFilm(filmId) {
-  const uri = API_ROOT + `films/${filmId}/`;
-  const fetchFilmOverApi = () => {
-    return api(uri)
-      .then(film => Object.assign({}, film, {
-        id: film.url && getUrlId(film.url),
-        episode: toRoman(film.episode_id || 0),
-        opening: (film.opening_crawl || '').replace(/(\r\n)+/g, ' ')
-      }));
-  }
-  const setIdbRecord = res => {
-    const newRecord = {
-      res,
-      fetchedOn: new Date(),
-      hash: stringHash(res.created + res.edited),
-    };
-    db.get(uri)
-      .then(record => {
-        record = record || {};
-        if (record.hash !== newRecord.hash) {
-          db.set(uri, newRecord)
-            .catch(err => console.error(`failed to store ${uri} in idb`, err));
-        }
-      });
-  };
-  return db.get(uri)
-    .then(record => {
-      if (record) {
-        const maxAge = 86400000;
-        const isExpired = (new Date() - record.fetchedOn) >= maxAge;
-        if (isExpired) {
-          return fetchFilmOverApi()
-            .then(film => {
-              setIdbRecord(film);
-              return film;
-            })
-            .catch(() => {
-              return record.film;
-            });
-        }
-        return record.res;
-      } else {
-        return fetchFilmOverApi()
-          .then(film => {
-            setIdbRecord(film);
-            return film;
-          });
-      }
-    });
-}
-
 export function fetchResource(resourceType, resourceId) {
   const uri = API_ROOT + `${resourceType}/${resourceId}/`;
   const fetchResourceOverApi = () => {
@@ -285,7 +234,9 @@ function validateResourceType(resourceType) {
 }
 
 function extendWithId(resource) {
-  return Object.assign({}, resource, {id: getUrlId(resource.url)});
+  return Object.assign({}, resource, {
+    id: resource.url && getUrlId(resource.url)
+  });
 }
 
 function getPageNumberFromUrl(url) {

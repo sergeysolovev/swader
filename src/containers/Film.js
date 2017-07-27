@@ -1,8 +1,9 @@
 import React from 'react'
-import { fetchFilm, fetchFilmResources } from '../middleware/api'
+import { fetchResource, fetchFilmResources } from '../middleware/api'
 import { LetObj, StringProp, RelatedResourcesProp } from '../components/Indent'
 import PropTypes from 'prop-types'
 import unplug from '../utils/unplug'
+import toRoman from '../utils/toRoman'
 
 export default class Film extends React.Component {
   static propTypes = {
@@ -24,8 +25,12 @@ export default class Film extends React.Component {
   componentDidMount() {
     const {params} = this.props.match;
     this.socket.plug(wire => wire(
-      fetchFilm(params.id),
+      fetchResource('films', params.id),
       film => {
+        film = Object.assign({}, film, {
+          episode: toRoman(film.episode_id || 0),
+          opening: (film.opening_crawl || '').replace(/(\r\n)+/g, ' ')
+        });
         this.setState({film});
         wire(
           fetchFilmResources(film),
