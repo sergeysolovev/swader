@@ -11,20 +11,20 @@ describe('Film', () => {
 
   let consoleError;
   let fetchResource;
-  let fetchFilmResources;
+  let fetchRelatedResources;
   let componentWillUnmount;
 
   beforeEach(() => {
     consoleError = jest.spyOn(global.console, 'error');
     fetchResource = jest.spyOn(api, 'fetchResource');
-    fetchFilmResources = jest.spyOn(api, 'fetchFilmResources');
+    fetchRelatedResources = jest.spyOn(api, 'fetchRelatedResources');
     componentWillUnmount = jest.spyOn(Film.prototype, 'componentWillUnmount');
   });
 
   afterEach(() => {
     consoleError.mockRestore();
     fetchResource.mockRestore();
-    fetchFilmResources.mockRestore();
+    fetchRelatedResources.mockRestore();
     componentWillUnmount.mockRestore();
   });
 
@@ -37,17 +37,17 @@ describe('Film', () => {
     mount(<Film match={match} />);
     return flushPromises().then(() => {
       expect(fetchResource).toBeCalled();
-      expect(fetchFilmResources).not.toBeCalled();
+      expect(fetchRelatedResources).not.toBeCalled();
     });
   });
 
   it('does not crash when fetching of film resources rejects', () => {
     fetchResource.mockImplementation(() => Promise.resolve({}));
-    fetchFilmResources.mockImplementation(() => Promise.reject(new Error()));
+    fetchRelatedResources.mockImplementation(() => Promise.reject(new Error()));
     mount(<Film match={match} />);
     return flushPromises().then(() => {
       expect(fetchResource).toBeCalled();
-      expect(fetchFilmResources).toBeCalled();
+      expect(fetchRelatedResources).toBeCalled();
     })
   });
 
@@ -71,7 +71,7 @@ describe('Film', () => {
     const wrapper = mount(<Film match={match} />);
     return flushPromises().then(() => {
       expect(fetchResource).toBeCalled();
-      expect(fetchFilmResources).toBeCalled();
+      expect(fetchRelatedResources).toBeCalled();
       expect(wrapper.find('table')).toHaveLength(1);
       expect(wrapper.text()).toMatch('let film = {');
       expect(wrapper.text()).toMatch('};');
@@ -102,7 +102,7 @@ describe('Film', () => {
     return flushPromises().then(() => {
       const msg = 'Warning: setState(...): Can only update a mounted or';
       expect(fetchResource).toBeCalled();
-      expect(fetchFilmResources).toBeCalled();
+      expect(fetchRelatedResources).toBeCalled();
       expect(componentWillUnmount).toBeCalled();
       expect(consoleError).toHaveBeenCalledTimes(2);
       expect(consoleError).toBeCalledWith(expect.stringContaining(msg));
@@ -115,7 +115,7 @@ describe('Film', () => {
     mount(<Film match={match} />).unmount();
     return flushPromises().then(() => {
       expect(fetchResource).toBeCalled();
-      expect(fetchFilmResources).not.toBeCalled();
+      expect(fetchRelatedResources).not.toBeCalled();
       expect(consoleError).not.toBeCalled();
     });
   });
@@ -124,14 +124,14 @@ describe('Film', () => {
       not causing errors`, () => {
     let wrapper;
     fetchResource.mockReturnValue(Promise.resolve({}));
-    fetchFilmResources.mockImplementation(() => {
+    fetchRelatedResources.mockImplementation(() => {
       wrapper.unmount();
       return Promise.resolve({});
     });
     wrapper = mount(<Film match={match} />);
     return flushPromises().then(() => {
       expect(fetchResource).toBeCalled();
-      expect(fetchFilmResources).toBeCalled();
+      expect(fetchRelatedResources).toBeCalled();
       expect(consoleError).not.toBeCalled();
     });
   });

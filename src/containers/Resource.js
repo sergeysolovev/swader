@@ -54,7 +54,7 @@ class Resource extends React.Component {
           Object
             .keys(item)
             .map(prop =>
-              isRelatedResource(item[prop]) ?
+              isRelatedResource(prop, item[prop]) ?
                 resources[prop] ?
                   <RelatedResourcesProp key={prop} name={prop} items={resources[prop]} /> :
                   <RelatedResourcesProp key={prop} name={prop} /> :

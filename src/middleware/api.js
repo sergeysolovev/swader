@@ -117,26 +117,6 @@ export function fetchResource(resourceType, resourceId) {
     });
 }
 
-export function fetchFilmResources(film) {
-  const promise = (resourceType, resourceUrls, mapResultsTo) =>
-    resourceUrls ?
-      Promise.all(resourceUrls
-        .map(url => getUrlId(url))
-        .map(id => fetchResource(resourceType, id))
-      )
-      .then(resources => mapResultsTo(resources)) :
-      Promise.resolve(mapResultsTo([]));
-  const promises = [
-    promise('people', film.characters, x => ({'characters': x})),
-    promise('planets', film.planets, x => ({'planets': x})),
-    promise('starships', film.starships, x => ({'starships': x})),
-    promise('species', film.species, x => ({'species': x})),
-    promise('vehicles', film.vehicles, x => ({'vehicles': x}))
-  ];
-  return Promise.all(promises)
-    .then(results => Object.assign({}, ...results))
-}
-
 export function getResourceTypeByProp(propName) {
   const propToResourceType = {
     'residents': 'people',
@@ -158,11 +138,18 @@ export function getResourceDisplayName(resourceType, item) {
   }[resourceType];
 }
 
-export function isRelatedResource(resource) {
+export function isRelatedResource(key, value) {
   const includesApiRoot = (res) => res.includes(API_ROOT);
-  return Array.isArray(resource) ?
-    resource.every(includesApiRoot) :
-    includesApiRoot(resource)
+  if (key === 'url') {
+     return false;
+  }
+  if (typeof value === 'string') {
+    return includesApiRoot(value);
+  }
+  if (Array.isArray(value)) {
+    return value.every(includesApiRoot);
+  }
+  return false;
 }
 
 export function fetchRelatedResources(item) {
@@ -175,7 +162,7 @@ export function fetchRelatedResources(item) {
       Promise.resolve(mapResultsTo([]));
   const promises = Object
     .keys(item)
-    .filter(key => isRelatedResource(item[key]))
+    .filter(key => isRelatedResource(key, item[key]))
     .map(key =>
       promise(
         getResourceTypeByProp(key),

@@ -1,5 +1,5 @@
 import React from 'react'
-import { fetchResource, fetchFilmResources } from '../middleware/api'
+import { fetchResource, fetchRelatedResources } from '../middleware/api'
 import { LetObj, StringProp, RelatedResourcesProp } from '../components/Indent'
 import PropTypes from 'prop-types'
 import unplug from '../utils/unplug'
@@ -33,7 +33,7 @@ export default class Film extends React.Component {
         });
         this.setState({film});
         wire(
-          fetchFilmResources(film),
+          fetchRelatedResources(film),
           resources => this.setState({resources}),
           reason => {}
         );
