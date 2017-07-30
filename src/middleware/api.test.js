@@ -1,7 +1,63 @@
 import * as api from './api';
-import db from 'idb-keyval';
+import dbkv from 'idb-keyval';
+import db from './db'
 import mockdate from 'mockdate';
 import flushPromises from '../utils/flushPromises'
+
+jest.mock('./db', () => {
+  let stores = {};
+  let gets = {};
+  let sets = {};
+  let clears = {};
+
+  const mock = function(objectStore) {
+    const objectStoreTs = objectStore + '.ts';
+
+    stores[objectStore] = stores[objectStore] || {};
+    stores[objectStoreTs] = stores[objectStoreTs] || {};
+
+    gets[objectStore] = gets[objectStore] || jest.fn((key) =>
+      Promise.resolve(stores[objectStore][key]));
+    gets[objectStoreTs] = gets[objectStoreTs] || jest.fn((key) =>
+      Promise.resolve(stores[objectStoreTs][key]));
+
+    sets[objectStore] = sets[objectStore] || jest.fn((key, value) => {
+      stores[objectStore][key] = value;
+      return Promise.resolve();
+    });
+    sets[objectStoreTs] = sets[objectStoreTs] || jest.fn((key, value) => {
+      stores[objectStoreTs][key] = value;
+      return Promise.resolve();
+    });
+
+    clears[objectStore] = clears[objectStore] || jest.fn(() => {
+      Object.keys(stores[objectStore]).forEach(key => delete stores[objectStore][key]);
+    });
+    clears[objectStoreTs] = clears[objectStoreTs] || jest.fn(() => {
+      Object.keys(stores[objectStoreTs]).forEach(key => delete stores[objectStoreTs][key]);
+    });
+
+    return {
+      get: gets[objectStore],
+      set: sets[objectStore],
+      clear: clears[objectStore],
+      ts: {
+        get: gets[objectStoreTs],
+        set: sets[objectStoreTs],
+        clear: clears[objectStoreTs]
+      }
+    };
+  };
+
+  mock.clearStores = function() {
+    Object.keys(stores).forEach(key => {
+      mock(key).clear();
+      mock(key).ts.clear();
+    });
+  }
+
+  return mock;
+});
 
 jest.mock('idb-keyval', () => {
   let store = {};
@@ -16,6 +72,49 @@ jest.mock('idb-keyval', () => {
   }
 });
 
+describe('db', () => {
+  it('supports get & set for multiple object stores', () => {
+    return Promise.resolve()
+      .then(() => db('people').set('people/1', 'Luke Skywalker'))
+      .then(() => db('people')
+        .get('people/1')
+        .then(value => expect(value).toBe('Luke Skywalker'))
+      )
+      .then(() => db('planets')
+        .get('people/1')
+        .then(value => expect(value).toBeUndefined())
+      )
+      .then(() => db('planets').set('planets/1', 'Tatooine'))
+      .then(() => db('planets')
+        .get('planets/1')
+        .then(value => expect(value).toBe('Tatooine'))
+      )
+      .then(() => expect(db('people').get).toBeCalled())
+      .then(() => expect(db('planets').set).toBeCalled())
+  });
+
+  it(`has .timestamps that supports get & set
+      for multiple object stores`, () => {
+    return Promise.resolve()
+      .then(() => db('people').ts.set('people/1', 'Luke Skywalker'))
+      .then(() => db('people').ts
+        .get('people/1')
+        .then(value => expect(value).toBe('Luke Skywalker'))
+      )
+      .then(() => db('planets').ts
+        .get('people/1')
+        .then(value => expect(value).toBeUndefined())
+      )
+      .then(() => db('planets').ts.set('planets/1', 'Tatooine'))
+      .then(() => db('planets').ts
+        .get('planets/1')
+        .then(value => expect(value).toBe('Tatooine'))
+      )
+      .then(() => expect(db('people').ts.get).toBeCalled())
+      .then(() => expect(db('planets').ts.set).toBeCalled())
+  });
+})
+
 describe('middleware/api', () => {
   const addSeconds = (date, seconds) => new Date(
     new Date(date).setSeconds(date.getSeconds() + seconds)
@@ -23,7 +122,8 @@ describe('middleware/api', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
-    db.clear();
+    db.clearStores();
+    dbkv.clear();
     mockdate.reset();
   });
 
@@ -52,7 +152,7 @@ describe('middleware/api', () => {
       fetch.mockReturnValue(fetchStub(res));
       return Promise.resolve()
         .then(() => api.fetchResource('people', 42))
-        .then(() => expect(db.get).toHaveBeenCalledWith(res.url));
+        .then(() => expect(db('people').get).toHaveBeenCalledWith(res.url));
     });
 
     it(`doesn't re-fetch less than 1-minute old resource`, () => {
@@ -60,8 +160,8 @@ describe('middleware/api', () => {
       mockdate.set(now);
       fetch.mockReturnValue(fetchStub(res));
       return Promise.resolve()
-        .then(() => db.set(res.url, res))
-        .then(() => db.set(res.url + "?ts", now))
+        .then(() => db('people').set(res.url, res))
+        .then(() => db('people').ts.set(res.url, now))
         .then(() => mockdate.set(addSeconds(now, 59)))
         .then(() => api.fetchResource('people', 42))
         .then(() => expect(fetch).not.toHaveBeenCalled());
@@ -72,8 +172,8 @@ describe('middleware/api', () => {
       mockdate.set(now);
       fetch.mockReturnValue(fetchStub(res));
       return Promise.resolve()
-        .then(() => db.set(res.url, res))
-        .then(() => db.set(res.url + "?ts", now))
+        .then(() => db('people').set(res.url, res))
+        .then(() => db('people').ts.set(res.url, now))
         .then(() => expect(fetch).not.toHaveBeenCalled())
         .then(() => mockdate.set(addSeconds(now, 60)))
         .then(() => api.fetchResource('people', 42))
@@ -87,7 +187,7 @@ describe('middleware/api', () => {
         .then(() => api.fetchResource('people', 42))
         .then(() => flushPromises())
         .then(() =>
-          expect(db.set).toHaveBeenLastCalledWith(
+          expect(db('people').set).toHaveBeenLastCalledWith(
             res.url,
             expect.objectContaining(res)
           )
@@ -102,15 +202,15 @@ describe('middleware/api', () => {
       mockdate.set(now);
       fetch.mockReturnValue(fetchStub(resEdited));
       return Promise.resolve()
-        .then(() => db.set(res.url, res))
-        .then(() => db.set(res.url + "?ts", now))
-        .then(() => db.set.mockClear())
+        .then(() => db('people').set(res.url, res))
+        .then(() => db('people').ts.set(res.url, now))
+        .then(() => db('people').set.mockClear())
         .then(() => mockdate.set(addSeconds(now, 60)))
         .then(() => api.fetchResource('people', 42))
         .then(() => flushPromises())
         .then(() => {
           expect(fetch).toHaveBeenCalled();
-          expect(db.set).toBeCalledWith(res.url,
+          expect(db('people').set).toBeCalledWith(res.url,
             expect.objectContaining({
               edited: resEdited.edited
             })
@@ -127,15 +227,18 @@ describe('middleware/api', () => {
       fetch.mockReturnValue(fetchStub(res));
       mockdate.set(now);
       return Promise.resolve()
-        .then(() => db.set(res.url, res))
-        .then(() => db.set(res.url + "?ts", now))
-        .then(() => db.set.mockClear())
+        .then(() => db('people').set(res.url, res))
+        .then(() => db('people').ts.set(res.url, now))
+        .then(() => db('people').set.mockClear())
         .then(() => mockdate.set(addSeconds(now, 60)))
         .then(() => api.fetchResource('people', 42))
         .then(() => flushPromises())
         .then(() => {
           expect(fetch).toHaveBeenCalled();
-          expect(db.set).not.toHaveBeenCalledWith(res.url, expect.any(Object));
+          expect(db('people').set).not.toHaveBeenCalledWith(
+            res.url,
+            expect.any(Object)
+          );
           expect(consoleInfo).not.toHaveBeenCalled();
         });
     });
@@ -197,12 +300,12 @@ describe('middleware/api', () => {
       fetch.mockReturnValue(fetchStub(firstFilm));
       return api.fetchFilms()
         .then(() => {
-          expect(db.set).toBeCalledWith('films/', expect.objectContaining({
+          expect(dbkv.set).toBeCalledWith('films/', expect.objectContaining({
             fetchedOn: expect.any(Date),
             films: expect.any(Array),
             hash: expect.any(Number)
           }));
-          const idbRecord = db.set.mock.calls[0][1];
+          const idbRecord = dbkv.set.mock.calls[0][1];
           expect((idbRecord.fetchedOn - new Date()) / 1000.0).toBeCloseTo(0);
           expect(idbRecord.films).toHaveLength(1);
           expect(idbRecord.hash).toEqual(4094460650);
@@ -214,7 +317,7 @@ describe('middleware/api', () => {
       return api.fetchFilms()
         .then(() => {
           expect(fetch).toBeCalled();
-          expect(db.set).not.toBeCalled();
+          expect(dbkv.set).not.toBeCalled();
         });
     });
 
@@ -235,7 +338,7 @@ describe('middleware/api', () => {
         })
         .then(() => {
           expect(fetch).toHaveBeenCalledTimes(2);
-          expect(db.set).toHaveBeenCalledTimes(1);
+          expect(dbkv.set).toHaveBeenCalledTimes(1);
         });
     });
 
@@ -254,7 +357,7 @@ describe('middleware/api', () => {
           return api.fetchFilms(); })
         .then(() => {
           expect(fetch).toHaveBeenCalledTimes(1);
-          expect(db.set).toHaveBeenCalledTimes(1);
+          expect(dbkv.set).toHaveBeenCalledTimes(1);
         })
         .then(() => {
           mockdate.set(addSeconds(now, 24 * 60 * 60));
@@ -262,7 +365,7 @@ describe('middleware/api', () => {
         })
         .then(() => {
           expect(fetch).toHaveBeenCalledTimes(2);
-          expect(db.set).toHaveBeenCalledTimes(2);
+          expect(dbkv.set).toHaveBeenCalledTimes(2);
         })
         .then(() => {
           mockdate.set(addSeconds(now, 2 * 24 * 60 * 60));
@@ -270,7 +373,7 @@ describe('middleware/api', () => {
         })
         .then(() => {
           expect(fetch).toHaveBeenCalledTimes(3);
-          expect(db.set).toHaveBeenCalledTimes(2);
+          expect(dbkv.set).toHaveBeenCalledTimes(2);
         })
         .then(() => {
           mockdate.set(addSeconds(now, 3 * 24 * 60 * 60));
@@ -278,7 +381,7 @@ describe('middleware/api', () => {
         })
         .then(() => {
           expect(fetch).toHaveBeenCalledTimes(4);
-          expect(db.set).toHaveBeenCalledTimes(3);
+          expect(dbkv.set).toHaveBeenCalledTimes(3);
         });
     });
 
@@ -295,7 +398,7 @@ describe('middleware/api', () => {
           return api.fetchFilms(); })
         .then(() => {
           expect(fetch).toHaveBeenCalledTimes(1);
-          expect(db.set).toHaveBeenCalledTimes(1);
+          expect(dbkv.set).toHaveBeenCalledTimes(1);
         })
         .then(() => {
           mockdate.set(addSeconds(now, 24 * 60 * 60));
@@ -303,7 +406,7 @@ describe('middleware/api', () => {
         })
         .then(() => {
           expect(fetch).toHaveBeenCalledTimes(2);
-          expect(db.set).toHaveBeenCalledTimes(1);
+          expect(dbkv.set).toHaveBeenCalledTimes(1);
         });
     });
   })

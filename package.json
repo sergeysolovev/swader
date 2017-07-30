@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "enzyme": "2.8.2",
+    "idb": "2.0.3",
     "idb-keyval": "2.3.0",
     "react": "15.5.4",
     "react-dom": "15.5.4",

@@ -1,7 +1,9 @@
 import Url from 'url'
 import toRoman from '../utils/toRoman'
-import db from 'idb-keyval'
+import dbkv from 'idb-keyval'
+import db from './db'
 import stringHash from 'string-hash'
+import resources from './resources'
 
 export const API_ROOT = 'https://swapi.now.sh/api/';
 export const throttleInterval = 60 * 1000;
@@ -33,17 +35,17 @@ export function fetchFilms() {
         fetchedOn: new Date(),
         hash: stringHash(films.map(f => f.created + f.edited).join()),
       };
-      db.get(path)
+      dbkv.get(path)
         .then(record => {
           record = record || {};
           if (record.hash !== newRecord.hash) {
-            db.set(path, newRecord)
+            dbkv.set(path, newRecord)
               .catch(err => console.error(`failed to store ${path} in idb`, err));
           }
         });
     }
   };
-  return db.get(path)
+  return dbkv.get(path)
     .then(record => {
       if (record) {
         const maxAge = 86400000;
@@ -76,18 +78,22 @@ export function fetchResource(resourceType, resourceId) {
     validateResourceType(resourceType) ||
     api(uri).then(json => extendWithId(json));
 
-  const storeRes = res =>
-    db.set(uri, res)
-      .catch(err => console.error(`failed to store ${uri} in idb`, err));
+  const storeRes = res => db(resourceType)
+    .set(uri, res)
+    .catch(err => console.error(
+      `failed to store ${uri} in idb`, err)
+    );
 
-  const storeTimestamp = () =>
-    db.set(uri + "?ts", new Date())
-      .catch(err => console.error(`failed to store ${uri + "?ts"} in idb`, err));
+  const storeTimestamp = () => db(resourceType).ts
+    .set(uri, new Date())
+    .catch(err => console.error(
+      `failed to store timestamp for ${uri} in idb`, err)
+    );
 
-  return db.get(uri)
+  return db(resourceType).get(uri)
     .then(storedRes => {
       if (storedRes) {
-        db.get(uri + "?ts").then(fetchedOn => {
+        db(resourceType).ts.get(uri).then(fetchedOn => {
           const needRefresh = (new Date() - fetchedOn) >= throttleInterval;
           if (needRefresh) {
             fetch().then(fetchedRes => {
@@ -112,7 +118,8 @@ export function fetchResource(resourceType, resourceId) {
           return fetchedRes;
         });
       }
-    });
+    })
+    .catch(error => console.error(error));
 }
 
 export function getResourceTypeByProp(propName) {
@@ -207,15 +214,7 @@ function api (endpoint) {
 }
 
 function validateResourceType(resourceType) {
-  const validTypes = [
-    'films',
-    'people',
-    'planets',
-    'starships',
-    'vehicles',
-    'species'
-  ];
-  return validTypes.includes(resourceType) ?
+  return resources.includes(resourceType) ?
     false :
     Promise.reject(`Invalid resource type '${resourceType}'`);
 }
