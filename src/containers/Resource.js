@@ -18,11 +18,9 @@ class Resource extends React.Component {
   }
   socket = unplug.socket();
   fetch = ({resourceType, id}) => {
-    const excludedProps = ['id', 'created', 'edited', 'url' ];
     this.socket.plug(wire => wire(
       fetchResource(resourceType, id),
       item => {
-        excludedProps.forEach(exProp => delete item[exProp]);
         this.setState({item});
         wire(
           fetchRelatedResources(item),
@@ -46,6 +44,7 @@ class Resource extends React.Component {
     this.fetch(this.props.match.params);
   }
   render() {
+    const excludedProps = ['id', 'created', 'edited', 'url' ];
     const { resourceType } = this.props.match.params;
     const { item, resources } = this.state;
     return (
@@ -53,6 +52,7 @@ class Resource extends React.Component {
         <LetObj name={`${resourceType}Item`}>{
           Object
             .keys(item)
+            .filter(prop => !excludedProps.includes(prop))
             .map(prop =>
               isRelatedResource(prop, item[prop]) ?
                 resources[prop] ?
