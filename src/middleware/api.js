@@ -4,6 +4,7 @@ import db from 'idb-keyval'
 import stringHash from 'string-hash'
 
 export const API_ROOT = 'https://swapi.now.sh/api/';
+export const throttleInterval = 60 * 1000;
 
 export function fetchFilms() {
   const path = 'films/';
@@ -70,49 +71,46 @@ export function fetchFilms() {
 
 export function fetchResource(resourceType, resourceId) {
   const uri = API_ROOT + `${resourceType}/${resourceId}/`;
-  const fetchResourceOverApi = () => {
-    return validateResourceType(resourceType) || api(uri)
-    .then(json => extendWithId(json));
-  }
 
-  const setIdbRecord = res => {
-    const newRecord = {
-      res,
-      fetchedOn: new Date(),
-      hash: stringHash(res.created + res.edited),
-    };
-    db.get(uri)
-      .then(record => {
-        record = record || {};
-        if (record.hash !== newRecord.hash) {
-          db.set(uri, newRecord)
-            .catch(err => console.error(`failed to store ${uri} in idb`, err));
-        }
-      });
-  };
+  const fetch = () =>
+    validateResourceType(resourceType) ||
+    api(uri).then(json => extendWithId(json));
+
+  const storeRes = res =>
+    db.set(uri, res)
+      .catch(err => console.error(`failed to store ${uri} in idb`, err));
+
+  const storeTimestamp = () =>
+    db.set(uri + "?ts", new Date())
+      .catch(err => console.error(`failed to store ${uri + "?ts"} in idb`, err));
 
   return db.get(uri)
-    .then(record => {
-      if (record) {
-        const maxAge = 86400000;
-        const isExpired = (new Date() - record.fetchedOn) >= maxAge;
-        if (isExpired) {
-          return fetchResourceOverApi()
-            .then(res => {
-              setIdbRecord(res);
-              return res;
-            })
-            .catch(() => {
-              return record.film;
+    .then(storedRes => {
+      if (storedRes) {
+        db.get(uri + "?ts").then(fetchedOn => {
+          const needRefresh = (new Date() - fetchedOn) >= throttleInterval;
+          if (needRefresh) {
+            fetch().then(fetchedRes => {
+              storeTimestamp().then(() => {
+                if (fetchedRes.edited !== storedRes.edited) {
+                  storeRes(fetchedRes).then(() =>
+                    console.info(
+                      `New data is available for ${uri}; please refresh.`
+                    )
+                  );
+                }
+              });
             });
-        }
-        return record.res;
+          }
+        });
+        return storedRes;
       } else {
-        return fetchResourceOverApi()
-          .then(res => {
-            setIdbRecord(res);
-            return res;
+        return fetch().then(fetchedRes => {
+          storeTimestamp().then(() => {
+            storeRes(fetchedRes);
           });
+          return fetchedRes;
+        });
       }
     });
 }
@@ -203,7 +201,9 @@ function api (endpoint) {
     endpoint :
     API_ROOT + endpoint;
   return fetch(fullUrl)
-    .then(response => response.json());
+    .then(response => {
+      return response.json();
+    });
 }
 
 function validateResourceType(resourceType) {
