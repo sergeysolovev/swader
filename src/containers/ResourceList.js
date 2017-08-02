@@ -22,7 +22,7 @@ export default class ResourceList extends Component {
   getInitialState() {
     return {
       filter: '',
-      results: {
+      data: {
         '': {
           items: [],
           count: 0,
@@ -37,9 +37,9 @@ export default class ResourceList extends Component {
     const filter = event.target.value;
     this.setState(prevState => ({
       filter,
-      results: prevState.results[filter] ?
-        prevState.results :
-        Object.assign({}, prevState.results, {
+      data: prevState.data[filter] ?
+        prevState.data :
+        Object.assign({}, prevState.data, {
           [filter]: {
             items: [],
             nextPage: undefined,
@@ -50,15 +50,15 @@ export default class ResourceList extends Component {
   }
   fetchMore = () => {
     const { resourceType } = this.props.match.params;
-    const { results, filter } = this.state;
-    const { nextPage } = results[filter];
+    const { data, filter } = this.state;
+    const { nextPage } = data[filter];
     this.socket.plug(wire => wire(
-      fetchResources(resourceType, filter, nextPage),
+      fetchResources(resourceType, nextPage),
       fetched => {
         this.setState(prevState => ({
-          results: Object.assign({}, prevState.results, {
+          data: Object.assign({}, prevState.data, {
             [filter]: {
-              items: prevState.results[filter].items.concat(fetched.items),
+              items: prevState.data[filter].items.concat(fetched.results),
               count: fetched.count,
               nextPage: fetched.nextPage,
               hasMore: Boolean(fetched.nextPage)
@@ -80,8 +80,8 @@ export default class ResourceList extends Component {
   render() {
     const { match } = this.props;
     const { resourceType } = match.params;
-    const { filter, results } = this.state;
-    const { items, count, hasMore } = results[filter];
+    const { filter, data } = this.state;
+    const { items, count, hasMore } = data[filter];
     return (
       <div className='container'>
         <LetObj name={resourceType}>
@@ -95,7 +95,7 @@ export default class ResourceList extends Component {
           </QuotedProp>
           <StringProp name='count' value={count} />
           <AutofetchRelatedResourcesProp
-            name='results'
+            name='data'
             prop={resourceType}
             items={items}
             fetchMore={this.fetchMore}

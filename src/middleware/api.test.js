@@ -11,48 +11,37 @@ jest.mock('./db', () => {
   let clears = {};
 
   const mock = function(objectStore) {
-    const objectStoreTs = objectStore + '.ts';
-
-    stores[objectStore] = stores[objectStore] || {};
-    stores[objectStoreTs] = stores[objectStoreTs] || {};
-
-    gets[objectStore] = gets[objectStore] || jest.fn((key) =>
-      Promise.resolve(stores[objectStore][key]));
-    gets[objectStoreTs] = gets[objectStoreTs] || jest.fn((key) =>
-      Promise.resolve(stores[objectStoreTs][key]));
-
-    sets[objectStore] = sets[objectStore] || jest.fn((key, value) => {
-      stores[objectStore][key] = value;
-      return Promise.resolve();
-    });
-    sets[objectStoreTs] = sets[objectStoreTs] || jest.fn((key, value) => {
-      stores[objectStoreTs][key] = value;
-      return Promise.resolve();
-    });
-
-    clears[objectStore] = clears[objectStore] || jest.fn(() => {
-      Object.keys(stores[objectStore]).forEach(key => delete stores[objectStore][key]);
-    });
-    clears[objectStoreTs] = clears[objectStoreTs] || jest.fn(() => {
-      Object.keys(stores[objectStoreTs]).forEach(key => delete stores[objectStoreTs][key]);
+    ['', '.ts', '.hs'].forEach(suffix => {
+      const storeKey = objectStore + suffix;
+      stores[storeKey] = stores[storeKey] || {};
+      gets[storeKey] = gets[storeKey] || jest.fn((key) => {
+        return Promise.resolve(stores[storeKey][key])
+      });
+      sets[storeKey] = sets[storeKey] || jest.fn((key, value) => {
+        stores[storeKey][key] = value;
+        return Promise.resolve();
+      });
     });
 
     return {
       get: gets[objectStore],
       set: sets[objectStore],
-      clear: clears[objectStore],
       ts: {
-        get: gets[objectStoreTs],
-        set: sets[objectStoreTs],
-        clear: clears[objectStoreTs]
+        get: gets[objectStore + '.ts'],
+        set: sets[objectStore + '.ts'],
+      },
+      hs: {
+        get: gets[objectStore + '.hs'],
+        set: sets[objectStore + '.hs'],
       }
     };
   };
 
   mock.clearStores = function() {
-    Object.keys(stores).forEach(key => {
-      mock(key).clear();
-      mock(key).ts.clear();
+    Object.keys(stores).forEach(storeKey => {
+      Object.keys(stores[storeKey]).forEach(key =>
+        delete stores[storeKey][key]
+      );
     });
   }
 
@@ -120,24 +109,23 @@ describe('middleware/api', () => {
     new Date(date).setSeconds(date.getSeconds() + seconds)
   );
 
+  let consoleInfo;
+
+  beforeEach(() => {
+    consoleInfo = jest
+      .spyOn(global.console, 'info')
+      .mockImplementation(() => {})
+  });
+
   afterEach(() => {
+    mockdate.reset();
     jest.clearAllMocks();
     db.clearStores();
     dbkv.clear();
-    mockdate.reset();
+    consoleInfo.mockRestore();
   });
 
   describe('fetchResource', () => {
-    let consoleInfo;
-
-    beforeEach(() => {
-      consoleInfo = jest
-        .spyOn(global.console, 'info')
-        .mockImplementation(() => {})
-    });
-
-    afterEach(() => consoleInfo.mockRestore());
-
     const fetchStub = (resource) => Promise.resolve({ json: () => resource });
 
     const res = {
@@ -237,6 +225,140 @@ describe('middleware/api', () => {
           expect(fetch).toHaveBeenCalled();
           expect(db('people').set).not.toHaveBeenCalledWith(
             res.url,
+            expect.any(Object)
+          );
+          expect(consoleInfo).not.toHaveBeenCalled();
+        });
+    });
+  });
+
+  describe('fetchResources', () => {
+    const fetchStub = (resource) => Promise.resolve({ json: () => resource });
+
+    const res = {
+      url: api.API_ROOT + 'people/',
+      results: [
+        {
+          created: '2014-12-10T14:23:31.880000Z',
+          edited: '2015-04-11T09:46:52.774897Z',
+          url: api.API_ROOT + 'people/42/'
+        }
+      ]
+    };
+
+    it('attempts to get the resource from idb by its url', () => {
+      fetch.mockReturnValue(fetchStub(res));
+      return Promise.resolve()
+        .then(() => api.fetchResources('people'))
+        .then(() => expect(db('people').get).toHaveBeenCalledWith(res.url));
+    });
+
+    it(`doesn't re-fetch less than 1-minute old resource`, () => {
+      const now = new Date();
+      mockdate.set(now);
+      fetch.mockReturnValue(fetchStub(res));
+      return Promise.resolve()
+        .then(() => db('people').set(res.url, res))
+        .then(() => db('people').ts.set(res.url, now))
+        .then(() => mockdate.set(addSeconds(now, 59)))
+        .then(() => api.fetchResources('people'))
+        .then(() => expect(fetch).not.toHaveBeenCalled());
+    });
+
+    it(`re-fetches 1-minute old resource`, () => {
+      const now = new Date();
+      mockdate.set(now);
+      fetch.mockReturnValue(fetchStub(res));
+      return Promise.resolve()
+        .then(() => db('people').set(res.url, res))
+        .then(() => db('people').ts.set(res.url, now))
+        .then(() => expect(fetch).not.toHaveBeenCalled())
+        .then(() => mockdate.set(addSeconds(now, 60)))
+        .then(() => api.fetchResources('people'))
+        .then(() => flushPromises())
+        .then(() => expect(fetch).toHaveBeenCalled());
+    });
+
+    it(`sets fetched resource with items,
+        replaced with theirs urls, in idb and
+        sets the items in idb as separate records`, () => {
+      fetch.mockReturnValue(fetchStub(res));
+      return Promise.resolve()
+        .then(() => api.fetchResources('people'))
+        .then(() => flushPromises())
+        .then(() => {
+          const resItem = res.results[0];
+          expect(db('people').set).toBeCalledWith(
+            res.url,
+            expect.objectContaining(Object.assign({}, res, { results: [resItem.url] }))
+          );
+          expect(db('people').set).toBeCalledWith(
+            resItem.url,
+            expect.objectContaining(resItem)
+          );
+        });
+    });
+
+    it(`re-sets a re-fetched resource and its items to idb
+        and informs the user that new data is available
+        if one of its items 'edited' values is different`, () => {
+      const now = new Date();
+      const resItem = res.results[0];
+      const resEditedItem = Object.assign({}, resItem,
+        {edited: resItem.edited + '-different'}
+      );
+      const resEdited = Object.assign({}, res,
+        {results: [resEditedItem]}
+      );
+      mockdate.set(now);
+      fetch.mockReturnValue(fetchStub(resEdited));
+      return Promise.resolve()
+        .then(() => db('people').set(res.url, res))
+        .then(() => db('people').set(resItem.url, resItem))
+        .then(() => db('people').ts.set(res.url, now))
+        .then(() => db('people').set.mockClear())
+        .then(() => mockdate.set(addSeconds(now, 60)))
+        .then(() => api.fetchResources('people'))
+        .then(() => flushPromises())
+        .then(() => {
+          expect(fetch).toBeCalled();
+          expect(db('people').set).toBeCalledWith(
+            res.url,
+            expect.objectContaining(Object.assign({}, res, { results: [resItem.url] }))
+          );
+          expect(db('people').set).toBeCalledWith(
+            resEditedItem.url,
+            expect.objectContaining(resEditedItem)
+          );
+          expect(consoleInfo).toBeCalledWith(
+            `New data is available for ${res.url}; please refresh.`
+          );
+        });
+    });
+
+    it(`doesn't re-set a re-fetched resource or its items to idb
+        if all of its items 'edited' values are the same`, () => {
+      const now = new Date();
+      const resItem = res.results[0];
+      mockdate.set(now);
+      fetch.mockReturnValue(fetchStub(res));
+      return Promise.resolve()
+        .then(() => db('people').set(res.url, res))
+        .then(() => db('people').set(resItem.url, resItem))
+        .then(() => db('people').ts.set(res.url, now))
+        .then(() => db('people').hs.set(res.url, 4094460650))
+        .then(() => db('people').set.mockClear())
+        .then(() => mockdate.set(addSeconds(now, 60)))
+        .then(() => api.fetchResources('people'))
+        .then(() => flushPromises())
+        .then(() => {
+          expect(fetch).toBeCalled();
+          expect(db('people').set).not.toHaveBeenCalledWith(
+            res.url,
+            expect.any(Object)
+          );
+          expect(db('people').set).not.toHaveBeenCalledWith(
+            resItem.url,
             expect.any(Object)
           );
           expect(consoleInfo).not.toHaveBeenCalled();

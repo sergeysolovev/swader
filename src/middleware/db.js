@@ -2,16 +2,19 @@ import idb from 'idb';
 import resources from './resources'
 
 export default function db(resource) {
-  const objectStoreTs = resource + '.ts';
   const dbPromise = idb.open('data', 1, upgradeDB => {
     resources.forEach(res => {
       upgradeDB.createObjectStore(res);
       upgradeDB.createObjectStore(res + '.ts');
+      upgradeDB.createObjectStore(res + '.hs');
     });
   });
   return Object.assign({},
     dbOps(dbPromise, resource),
-    { ts: dbOps(dbPromise, resource + '.ts') }
+    {
+      ts: dbOps(dbPromise, resource + '.ts'),
+      hs: dbOps(dbPromise, resource + '.hs')
+    }
   );
 }
 

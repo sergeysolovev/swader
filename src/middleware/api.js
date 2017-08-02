@@ -122,6 +122,125 @@ export function fetchResource(resourceType, resourceId) {
     .catch(error => console.error(error));
 }
 
+export function fetchResources(resourceType, page) {
+  const url = API_ROOT + `${resourceType}/` + (page ? `?page=${page}` : '')
+
+  const fetch = () => {
+    return validateResourceType(resourceType) ||
+    api(url).then(json => ({
+      count: json.count,
+      results: json.results.map(resource => extendWithId(resource)),
+      url: url,
+      nextPage: getPageNumberFromUrl(json.next)
+    }));
+  }
+
+  const storeRes = fetchedRes => {
+    // to collect all db(resourceType).set promises
+    let pending = [];
+
+    // store timestamp
+    pending.push(
+      db(resourceType).ts
+        .set(url, new Date())
+        .catch(err => console.error(
+          `failed to store timestamp for ${url} in idb`, err)
+        )
+    );
+
+    const fetchedHash = stringHash(
+      fetchedRes.results.map(i => i.created + i.edited).join()
+    );
+
+    // store the resource, the hash and its items
+    // if it has a different hash
+    return db(resourceType).hs
+      .get(url)
+      .then(storedHash => {
+        const newDataIsAvaialable = (fetchedHash !== storedHash);
+        if (newDataIsAvaialable) {
+          const storedRes = Object.assign({}, fetchedRes,
+            {
+              results: fetchedRes.results.map(i => i.url)
+            }
+          );
+
+          // store the resource
+          pending.push(
+            db(resourceType)
+              .set(fetchedRes.url, storedRes)
+              .catch(err => console.error(
+                `failed to store ${url} in idb`, err)
+              )
+          );
+
+          // store the hash
+          pending.push(
+            db(resourceType).hs
+              .set(fetchedRes.url, fetchedHash)
+              .catch(err => console.error(
+                `failed to store hash for ${url} in idb`, err)
+              )
+          );
+
+          // store each item from the resource:
+          pending.push(
+            Promise.all(
+              fetchedRes.results.map(fetchedItem =>
+                db(resourceType)
+                  .get(fetchedItem.url)
+                  .then(storedItem => {
+                    if (!storedItem || storedItem.edited !== fetchedItem.edited) {
+                      return db(resourceType)
+                        .set(fetchedItem.url, fetchedItem)
+                        .catch(err => console.error(
+                          `failed to store ${url} in idb`, err)
+                        );
+                    } else {
+                      return Promise.resolve();
+                    }
+                  })
+              )
+            )
+          );
+        }
+
+        return Promise.all(pending).then(() => ({newDataIsAvaialable}));
+      });
+  }
+
+  return db(resourceType).get(url)
+    .then(storedRes => {
+      if (storedRes) {
+        db(resourceType).ts.get(url).then(fetchedOn => {
+          const now = new Date();
+          const needRefresh = (now - fetchedOn) >= throttleInterval;
+          if (needRefresh) {
+            fetch().then(fetchedRes => {
+              storeRes(fetchedRes).then(result => {
+                if (result && result.newDataIsAvaialable) {
+                  console.info(
+                    `New data is available for ${url}; please refresh.`
+                  )
+                }
+              })
+            });
+          }
+        });
+
+        return Promise
+          .all(storedRes.results.map(itemUrl => db(resourceType).get(itemUrl)))
+          .then(results => Object.assign({}, storedRes, {results}))
+      } else {
+        return fetch().then(fetchedRes => {
+          storeRes(fetchedRes);
+          return fetchedRes;
+        });
+      }
+    })
+    .catch(error => console.error(error));
+}
+
 export function getResourceTypeByProp(propName) {
   const propToResourceType = {
     'residents': 'people',
@@ -177,25 +296,6 @@ export function fetchRelatedResources(item) {
     );
   return Promise.all(promises)
     .then(results => Object.assign({}, ...results));
-}
-
-export function fetchResources(resourceType, filter, page) {
-  const url = `${resourceType}/` + (
-    filter && page ? `?search=${encodeURI(filter)}&page=${page}` :
-    filter ? `?search=${encodeURI(filter)}` :
-    page ? `?page=${page}` : ''
-  );
-  return validateResourceType(resourceType) ||
-    api(url)
-      .then(json => ({
-        count: json.count,
-        items: json.results.map(resource => extendWithId(resource)),
-        url: url,
-        nextPage: getPageNumberFromUrl(json.next)
-      }))
-      .catch(error => Promise.reject(
-        `Failed to load '${resourceType}' from http://swapi.co`)
-      );
 }
 
 export function getUrlId(url) {

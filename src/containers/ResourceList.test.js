@@ -39,7 +39,7 @@ describe('ResourceList', () => {
   });
 
   it('renders empty list of resources', () => {
-    const resources = { items: [], count: 0 };
+    const resources = { results: [], count: 0 };
     fetchResources.mockImplementation(() => Promise.resolve(resources));
     const wrapper = mount(<ResourceList match={match} />);
     return flushPromises().then(() => {
@@ -61,9 +61,9 @@ describe('ResourceList', () => {
 
       const arrayProp = wrapper
         .find(AutofetchRelatedResourcesProp)
-        .filterWhere(w => w.prop("name") === 'results');
+        .filterWhere(w => w.prop("name") === 'data');
       expect(arrayProp).toHaveLength(1);
-      expect(arrayProp.first().prop("items")).toEqual(resources.items);
+      expect(arrayProp.first().prop("items")).toEqual(resources.results);
     })
   });
 
@@ -71,7 +71,7 @@ describe('ResourceList', () => {
     const match = { params: { resourceType: 'people' } };
     const lukeSkywalker = { name: "Luke Skywalker", id: 1 };
     const dartVader = { name: "Darth Vader", id: 4 };
-    const resources = { items: [lukeSkywalker, dartVader] };
+    const resources = { results: [lukeSkywalker, dartVader] };
     fetchResources.mockImplementation(() => Promise.resolve(resources));
     const wrapper = mount(
       <MemoryRouter>
