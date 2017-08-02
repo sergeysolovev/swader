@@ -1,6 +1,7 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 import { LetObj, StringProp, QuotedProp, ObjProp } from '../components/Indent'
+import { API_ROOT, throttleInterval } from '../middleware/api'
 
 const About = () => (
   <div className="container">
@@ -15,6 +16,14 @@ const About = () => (
         <a href="https://github.com/sergeysolovev/swader">
           https://github.com/sergeysolovev/swader
         </a>
+      </QuotedProp>
+      <QuotedProp name="api_endpoint">
+        <a href={`${API_ROOT}`}>
+          {`${API_ROOT}`}
+        </a>
+      </QuotedProp>
+      <QuotedProp name="api_throttle_interval">
+        {`${throttleInterval/1000.0}`}s
       </QuotedProp>
       <ObjProp name="contents">
         <QuotedProp name="films"><Link to='/films'>/films</Link></QuotedProp>
