@@ -1,6 +1,6 @@
 import React from 'react'
 import { LetLinkArray } from '../components/Indent'
-import { fetchFilms } from '../middleware/api'
+import { fetchResources, getResourceDisplayName } from '../middleware/api'
 import unplug from '../utils/unplug'
 
 export default class Films extends React.Component {
@@ -10,8 +10,8 @@ export default class Films extends React.Component {
   socket = unplug.socket();
   componentDidMount() {
     this.socket.plug(wire => wire(
-      fetchFilms(),
-      films => this.setState({films}),
+      fetchResources('films'),
+      fetched => this.setState({films: fetched.results}),
       error => {}
     ));
   }
@@ -25,8 +25,8 @@ export default class Films extends React.Component {
         <LetLinkArray
           name="starWarsFilmSeries"
           items={films}
-          display={x => x.displayName}
-          link={x => x.path}
+          display={film => getResourceDisplayName('films', film)}
+          link={film => `films/${film.id}`}
         />
       </div>
     );

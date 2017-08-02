@@ -1,75 +1,11 @@
 import Url from 'url'
 import toRoman from '../utils/toRoman'
-import dbkv from 'idb-keyval'
 import db from './db'
 import stringHash from 'string-hash'
 import resources from './resources'
 
 export const API_ROOT = 'https://swapi.now.sh/api/';
 export const throttleInterval = 60 * 1000;
-
-export function fetchFilms() {
-  const path = 'films/';
-  const fetchFilmsOverApi = () => {
-    const getPath = (filmJson) => filmJson.url ?
-      path + getUrlId(filmJson.url) : '#';
-    const getDisplayName = (filmJson) => {
-      const episode = toRoman(filmJson.episode_id || 0);
-      const title = filmJson.title;
-      const year = getYear(filmJson);
-      return `${episode} – ${title} (${year})`;
-    };
-    return api(path)
-      .then(json => json.results.map(filmJson => ({
-        created: filmJson.created,
-        edited: filmJson.edited,
-        path: getPath(filmJson),
-        displayName: getDisplayName(filmJson)
-      })));
-  };
-  const setIdbRecord = films => {
-    const isNonEmptyArray = Array.isArray(films) && films.length > 0;
-    if (isNonEmptyArray) {
-      const newRecord = {
-        films,
-        fetchedOn: new Date(),
-        hash: stringHash(films.map(f => f.created + f.edited).join()),
-      };
-      dbkv.get(path)
-        .then(record => {
-          record = record || {};
-          if (record.hash !== newRecord.hash) {
-            dbkv.set(path, newRecord)
-              .catch(err => console.error(`failed to store ${path} in idb`, err));
-          }
-        });
-    }
-  };
-  return dbkv.get(path)
-    .then(record => {
-      if (record) {
-        const maxAge = 86400000;
-        const isExpired = (new Date() - record.fetchedOn) >= maxAge;
-        if (isExpired) {
-          return fetchFilmsOverApi()
-            .then(films => {
-              setIdbRecord(films);
-              return films;
-            })
-            .catch(() => {
-              return record.films;
-            });
-        }
-        return record.films;
-      } else {
-        return fetchFilmsOverApi()
-          .then(films => {
-            setIdbRecord(films);
-            return films;
-          });
-      }
-    });
-}
 
 export function fetchResource(resourceType, resourceId) {
   const uri = API_ROOT + `${resourceType}/${resourceId}/`;
@@ -252,8 +188,10 @@ export function getResourceTypeByProp(propName) {
 }
 
 export function getResourceDisplayName(resourceType, item) {
+  const getFilmTitle = () =>
+    `${toRoman(item.episode_id || 0)} – ${item.title} (${getYear(item)})`;
   return {
-    'films': `${item.title} (${getYear(item)})`,
+    'films': getFilmTitle(),
     'people': item.name,
     'planets': item.name,
     'starships': item.name,
@@ -329,6 +267,6 @@ function getPageNumberFromUrl(url) {
   return url ? parseInt(Url.parse(url, true).query.page, 10) : undefined;
 }
 
-function getYear(film) {
+export function getYear(film) {
   return new Date(film.release_date).getFullYear();
 }

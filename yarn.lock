@@ -3078,11 +3078,7 @@ icss-replace-symbols@^1.1.0:
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/icss-replace-symbols/-/icss-replace-symbols-1.1.0.tgz#06ea6f83679a7749e386cfe1fe812ae5db223ded"
 
-idb-keyval@2.3.0:
-  version "2.3.0"
-  resolved "https://registry.yarnpkg.com/idb-keyval/-/idb-keyval-2.3.0.tgz#4d444b80c3f86fcbcd51321b4dcbc9247c5948c0"
-
-idb@^2.0.3:
+idb@2.0.3:
   version "2.0.3"
   resolved "https://registry.yarnpkg.com/idb/-/idb-2.0.3.tgz#705ce38f57525c7b3e9949d6b2aad7d8ddc08dce"
 
