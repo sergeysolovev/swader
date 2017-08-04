@@ -34,6 +34,16 @@ describe('Films', () => {
     });
   });
 
+  it(`renders without crashing and errors when offline`, () => {
+    fetchResources.mockImplementation(() =>
+      Promise.resolve({ notAvailableOffline: true })
+    );
+    const wrapper = mount(<Films />)
+    return flushPromises().then(() => {
+      expect(consoleError).not.toHaveBeenCalled();
+    })
+  })
+
   it("renders empty list of films", () => {
     fetchResources.mockImplementation(() => Promise.resolve([]));
     const wrapper = mount(<Films />);

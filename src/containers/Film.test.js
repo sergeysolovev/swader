@@ -1,6 +1,6 @@
 import React from 'react';
 import Film from './Film';
-import { Link } from 'react-router-dom'
+import { MemoryRouter, Link } from 'react-router-dom'
 import { StringProp, RelatedResourcesProp } from '../components/Indent'
 import { shallow, mount } from 'enzyme'
 import flushPromises from '../utils/flushPromises'
@@ -50,6 +50,43 @@ describe('Film', () => {
       expect(fetchRelatedResources).toBeCalled();
     })
   });
+
+  it(`renders without crashing and errors when offline`, () => {
+    fetchResource.mockImplementation(() =>
+      Promise.resolve({ notAvailableOffline: true })
+    );
+    const wrapper = mount(<Film match={match} />)
+    return flushPromises().then(() => {
+      expect(consoleError).not.toHaveBeenCalled();
+    })
+  })
+
+  it(`doesn't show related resources not available offline`, () => {
+    fetchResource.mockImplementation(() => Promise.resolve({
+      people: [
+        api.API_ROOT + 'people/1/',
+        api.API_ROOT + 'people/2/',
+      ]
+    }));
+    fetchRelatedResources.mockImplementation(() => Promise.resolve({
+      characters: [
+        { notAvailableOffline: true },
+        { name: 'Someone' }
+      ]
+    }));
+    const wrapper = mount(
+      <MemoryRouter>
+        <Film match={match} />
+      </MemoryRouter>
+    );
+    return flushPromises().then(() => {
+      expect(fetchResource).toBeCalled();
+      expect(fetchRelatedResources).toBeCalled();
+      expect(wrapper.text()).toMatch(
+        /characters: \[Someone\]/
+      );
+    })
+  })
 
   it(`renders DOM of empty Film`, () => {
     fetchResource.mockReturnValue(Promise.resolve({}));

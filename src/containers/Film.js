@@ -52,6 +52,10 @@ export default class Film extends React.Component {
       planets,
       species,
       vehicles } = this.state.resources;
+
+    const exceptUnavailableOffline = (items) =>
+      (items || []).filter(res => !res.notAvailableOffline);
+
     return (
       <div className='container'>
         <LetObj name='film'>
@@ -61,11 +65,16 @@ export default class Film extends React.Component {
           <StringProp name="directed_by" value={film.director} />
           <StringProp name="produced_by" value={film.producer} />
           <StringProp name="opening" value={film.opening} />
-          <RelatedResourcesProp name='characters' items={characters} />
-          <RelatedResourcesProp name='starships' items={starships} />
-          <RelatedResourcesProp name='planets' items={planets} />
-          <RelatedResourcesProp name='species' items={species} />
-          <RelatedResourcesProp name='vehicles' items={vehicles} />
+          <RelatedResourcesProp name='characters'
+            items={exceptUnavailableOffline(characters)} />
+          <RelatedResourcesProp name='starships'
+            items={exceptUnavailableOffline(starships)} />
+          <RelatedResourcesProp name='planets'
+            items={exceptUnavailableOffline(planets)} />
+          <RelatedResourcesProp name='species'
+            items={exceptUnavailableOffline(species)} />
+          <RelatedResourcesProp name='vehicles'
+            items={exceptUnavailableOffline(vehicles)} />
         </LetObj>
       </div>
     );
