@@ -3,8 +3,8 @@
   "name": "swader",
   "icons": [
     {
-      "src": "favicon.ico",
-      "sizes": "192x192",
+      "src": "icon.png",
+      "sizes": "512x512",
       "type": "image/png"
     }
   ],
