@@ -44,9 +44,13 @@ class Resource extends React.Component {
     this.fetch(this.props.match.params);
   }
   render() {
-    const excludedProps = ['id', 'created', 'edited', 'url' ];
+    const excludedProps = ['id', 'created', 'edited', 'url', 'notAvailableOffline' ];
     const { resourceType } = this.props.match.params;
     const { item, resources } = this.state;
+
+    const exceptUnavailableOffline = (prop) =>
+      (resources[prop] || []).filter(res => !res.notAvailableOffline);
+
     return (
       <div className='container'>
         <LetObj name={`${resourceType}Item`}>{
@@ -56,8 +60,15 @@ class Resource extends React.Component {
             .map(prop =>
               isRelatedResource(prop, item[prop]) ?
                 resources[prop] ?
-                  <RelatedResourcesProp key={prop} name={prop} items={resources[prop]} /> :
-                  <RelatedResourcesProp key={prop} name={prop} /> :
+                  <RelatedResourcesProp
+                    key={prop}
+                    name={prop}
+                    items={exceptUnavailableOffline(prop)}
+                  /> :
+                  <RelatedResourcesProp
+                    key={prop}
+                    name={prop}
+                  /> :
                 <StringProp key={prop} name={prop} value={item[prop]} />)
         }</LetObj>
       </div>

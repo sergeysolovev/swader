@@ -1,5 +1,6 @@
 import Url from 'url'
 import toRoman from '../utils/toRoman'
+import isOnline from '../utils/isOnline'
 import db from './db'
 import stringHash from 'string-hash'
 import resources from './resources'
@@ -31,7 +32,7 @@ export function fetchResource(resourceType, resourceId) {
       if (storedRes) {
         db(resourceType).ts.get(uri).then(fetchedOn => {
           const needRefresh = (new Date() - fetchedOn) >= throttleInterval;
-          if (needRefresh) {
+          if (needRefresh && isOnline()) {
             fetch().then(fetchedRes => {
               storeTimestamp().then(() => {
                 if (fetchedRes.edited !== storedRes.edited) {
@@ -46,13 +47,15 @@ export function fetchResource(resourceType, resourceId) {
           }
         });
         return storedRes;
-      } else {
+      } else if (isOnline()) {
         return fetch().then(fetchedRes => {
           storeTimestamp().then(() => {
             storeRes(fetchedRes);
           });
           return fetchedRes;
         });
+      } else {
+        return { notAvailableOffline: true };
       }
     })
     .catch(error => console.error(error));
@@ -151,7 +154,7 @@ export function fetchResources(resourceType, page) {
         db(resourceType).ts.get(url).then(fetchedOn => {
           const now = new Date();
           const needRefresh = (now - fetchedOn) >= throttleInterval;
-          if (needRefresh) {
+          if (needRefresh && isOnline()) {
             fetch().then(fetchedRes => {
               storeRes(fetchedRes).then(result => {
                 if (result && result.newDataIsAvaialable) {
@@ -167,11 +170,13 @@ export function fetchResources(resourceType, page) {
         return Promise
           .all(storedRes.results.map(itemUrl => db(resourceType).get(itemUrl)))
           .then(results => Object.assign({}, storedRes, {results}))
-      } else {
+      } else if (isOnline()) {
         return fetch().then(fetchedRes => {
           storeRes(fetchedRes);
           return fetchedRes;
         });
+      } else {
+        return { notAvailableOffline: true };
       }
     })
     .catch(error => console.error(error));

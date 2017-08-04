@@ -1,7 +1,8 @@
 import React from 'react';
 import Resource from './Resource';
-import { Link } from 'react-router-dom'
+import { MemoryRouter, Link } from 'react-router-dom'
 import { shallow, mount } from 'enzyme'
+import { RelatedResourcesProp } from '../components/Indent'
 import flushPromises from '../utils/flushPromises'
 import * as api from '../middleware/api'
 
@@ -59,6 +60,47 @@ describe('Resource', () => {
       expect(wrapper.find('table')).toHaveLength(1);
       expect(wrapper.text()).toMatch(/let [\w]+ = {};/);
       expect(wrapper.find(Link)).toHaveLength(0);
+    })
+  })
+
+  it(`renders without crashing and errors when offline`, () => {
+    fetchResource.mockImplementation(() =>
+      Promise.resolve({ notAvailableOffline: true })
+    );
+    const wrapper = mount(<Resource match={match} />)
+    return flushPromises().then(() => {
+      expect(consoleError).not.toHaveBeenCalled();
+    })
+  })
+
+  it(`doesn't show related resources not available offline`, () => {
+    fetchResource.mockImplementation(() => Promise.resolve({
+      films: [
+        api.API_ROOT + 'films/1/',
+        api.API_ROOT + 'films/2/',
+      ]
+    }));
+    fetchRelated.mockImplementation(() => Promise.resolve({
+      films: [
+        { notAvailableOffline: true },
+        {
+          title: "The Empire Strikes Back",
+          release_date: "1980-05-17",
+          episode_id: 5
+        }
+      ]
+    }));
+    const wrapper = mount(
+      <MemoryRouter>
+        <Resource match={match} />
+      </MemoryRouter>
+    );
+    return flushPromises().then(() => {
+      expect(fetchResource).toBeCalled();
+      expect(fetchRelated).toBeCalled();
+      expect(wrapper.text()).toMatch(
+        /films: \[V – The Empire Strikes Back \(1980\)\]/
+      );
     })
   })
 

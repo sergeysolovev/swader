@@ -2,6 +2,7 @@ import * as api from './api';
 import db from './db'
 import mockdate from 'mockdate';
 import flushPromises from '../utils/flushPromises'
+import * as isOnlineModule from '../utils/isOnline'
 
 jest.mock('./db', () => {
   let stores = {};
@@ -96,9 +97,14 @@ describe('middleware/api', () => {
   );
 
   let consoleInfo;
-  let fetch = jest.spyOn(global, 'fetch');
+  let isOnline;
+  let fetch;
 
   beforeEach(() => {
+    fetch = jest
+      .spyOn(global, 'fetch');
+    isOnline = jest
+      .spyOn(isOnlineModule, 'default');
     consoleInfo = jest
       .spyOn(global.console, 'info')
       .mockImplementation(() => {})
@@ -108,7 +114,9 @@ describe('middleware/api', () => {
     mockdate.reset();
     jest.clearAllMocks();
     db.clearStores();
+    fetch.mockRestore();
     consoleInfo.mockRestore();
+    isOnline.mockRestore();
   });
 
   describe('fetchResource', () => {
@@ -215,6 +223,29 @@ describe('middleware/api', () => {
           );
           expect(consoleInfo).not.toHaveBeenCalled();
         });
+    });
+
+    it(`doesn't fetch when offline and returns
+        { notAvailableOffline: true }`, () => {
+      isOnline.mockReturnValue(false);
+      fetch.mockReturnValue(fetchStub(res));
+      return Promise.resolve()
+        .then(() => api.fetchResource('people', 42))
+        .then(fetched => expect(fetched).toEqual({notAvailableOffline: true}))
+        .then(() => expect(fetch).not.toBeCalled());
+    });
+
+    it(`doesn't re-fetch when offline`, () => {
+      isOnline.mockReturnValue(false);
+      const now = new Date();
+      fetch.mockReturnValue(fetchStub(res));
+      mockdate.set(now);
+      return Promise.resolve()
+        .then(() => db('people').set(res.url, res))
+        .then(() => db('people').ts.set(res.url, now))
+        .then(() => mockdate.set(addSeconds(now, 60)))
+        .then(() => api.fetchResource('people', 42))
+        .then(() => expect(fetch).not.toHaveBeenCalled());
     });
   });
 
@@ -349,6 +380,30 @@ describe('middleware/api', () => {
           );
           expect(consoleInfo).not.toHaveBeenCalled();
         });
+    });
+
+    it(`doesn't fetch when offline and returns
+        { notAvailableOffline: true }`, () => {
+      isOnline.mockReturnValue(false);
+      fetch.mockReturnValue(fetchStub(res));
+      return Promise.resolve()
+        .then(() => api.fetchResources('people'))
+        .then(fetched => expect(fetched).toEqual({notAvailableOffline: true}))
+        .then(() => expect(fetch).not.toBeCalled());
+    });
+
+    it(`doesn't re-fetch when offline`, () => {
+      isOnline.mockReturnValue(false);
+      const now = new Date();
+      fetch.mockReturnValue(fetchStub(res));
+      mockdate.set(now);
+      return Promise.resolve()
+        .then(() => db('people').set(res.url, res))
+        .then(() => db('people').ts.set(res.url, now))
+        .then(() => db('people').hs.set(res.url, 4094460650))
+        .then(() => mockdate.set(addSeconds(now, 60)))
+        .then(() => api.fetchResources('people'))
+        .then(() => expect(fetch).not.toHaveBeenCalled());
     });
   });
 });

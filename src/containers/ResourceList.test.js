@@ -67,6 +67,16 @@ describe('ResourceList', () => {
     })
   });
 
+  it('renders without crashing and errors when offline', () => {
+    fetchResources.mockImplementation(() =>
+      Promise.resolve({ notAvailableOffline: true })
+    );
+    const wrapper = mount(<ResourceList match={match} />);
+    return flushPromises().then(() => {
+      expect(consoleError).not.toBeCalled();
+    })
+  });
+
   it('renders a list of characters with links', () => {
     const match = { params: { resourceType: 'people' } };
     const lukeSkywalker = { name: "Luke Skywalker", id: 1 };
