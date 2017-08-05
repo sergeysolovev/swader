@@ -6,7 +6,7 @@ import { API_ROOT, throttleInterval } from '../middleware/api'
 const About = () => (
   <div className="container">
     <LetObj name="swader">
-      <StringProp name="version" value="0.1.0" />
+      <StringProp name="version" value="0.2.1" />
       <StringProp name="stands_for" value="(S)tar (W)ars (A)PI's (D)ata (E)xplore(R)" />
       <QuotedProp name="about">
         <a href="https://facebook.github.io/react/">react.js</a> app
