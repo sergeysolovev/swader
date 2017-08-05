@@ -6,6 +6,7 @@
     "mockdate": "2.0.1",
     "react-scripts": "1.0.10",
     "react-test-renderer": "15.5.4",
+    "serve": "6.0.5",
     "surge": "0.19.0"
   },
   "dependencies": {
@@ -19,11 +20,13 @@
     "url": "0.11.0"
   },
   "scripts": {
-    "start": "react-scripts start",
+    "start:dev": "react-scripts start",
+    "start": "serve -s build",
     "build": "react-scripts build",
+    "build:surge": "react-scripts build && cp build/index.html build/200.html",
     "test": "react-scripts test --env=jsdom",
     "eject": "react-scripts eject",
-    "predeploy": "npm run build && cp build/index.html build/200.html",
-    "deploy": "surge build"
+    "deploy": "now",
+    "deploy:surge": "npm run build:surge && surge build"
   }
 }
