@@ -1,7 +1,7 @@
 import React from 'react'
 import { LetLinkArray } from '../components/Indent'
 import { fetchResources, getResourceDisplayName } from '../middleware/api'
-import unplug from '../utils/unplug'
+import unplug from 'react-unplug'
 
 export default class Films extends React.Component {
   state = {

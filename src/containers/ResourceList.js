@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 import { fetchResources } from '../middleware/api'
-import unplug from '../utils/unplug'
+import unplug from 'react-unplug'
 import {
   LetObj,
   StringProp,

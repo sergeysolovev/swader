@@ -2,7 +2,7 @@ import React from 'react'
 import { fetchResource, fetchRelatedResources, isRelatedResource } from '../middleware/api'
 import { LetObj, StringProp, RelatedResourcesProp } from '../components/Indent'
 import PropTypes from 'prop-types'
-import unplug from '../utils/unplug'
+import unplug from 'react-unplug'
 
 class Resource extends React.Component {
   static propTypes = {
